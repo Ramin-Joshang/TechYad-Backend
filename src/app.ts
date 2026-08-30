@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import routes from './routes/index.js';
 import { errorHandler } from './common/middleware/errorHandler.js';
 import { AppError } from './common/errors/AppError.js';
+import { swaggerDocument } from './docs/swagger.js';
 
 const app = express();
 
@@ -23,6 +25,9 @@ app.use(express.json({ limit: '10kb' }));
 
 // API Routes
 app.use('/api/v1', routes);
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Root route for preview
 app.get('/', (req, res) => {

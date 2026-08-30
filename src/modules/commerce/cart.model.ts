@@ -1,0 +1,41 @@
+import { Schema, Types, model, Document } from "mongoose";
+
+export interface ICartItem {
+  itemType: "course" | "class";
+  itemId: Types.ObjectId;
+}
+
+export interface ICart extends Document {
+  userId: Types.ObjectId;
+  items: ICartItem[];
+}
+
+const cartSchema = new Schema<ICart>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+      index: true,
+    },
+    items: [
+      {
+        itemType: {
+          type: String,
+          enum: ["course", "class"],
+          required: true,
+        },
+        itemId: {
+          type: Schema.Types.ObjectId,
+          required: true,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export const Cart = model<ICart>("Cart", cartSchema);
