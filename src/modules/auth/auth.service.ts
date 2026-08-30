@@ -45,8 +45,8 @@ export class AuthService {
       status: 'active',
     });
 
-    const accessToken = signToken(newUser._id as string);
-    const refreshToken = signRefreshToken(newUser._id as string);
+    const accessToken = signToken(newUser._id.toString());
+    const refreshToken = signRefreshToken(newUser._id.toString());
 
     return {
       user: {
@@ -76,8 +76,8 @@ export class AuthService {
       throw new AppError('Your account is not active', 403, 'AUTH_ACCOUNT_INACTIVE');
     }
 
-    const accessToken = signToken(user._id as string);
-    const refreshToken = signRefreshToken(user._id as string);
+    const accessToken = signToken(user._id.toString());
+    const refreshToken = signRefreshToken(user._id.toString());
 
     const role = user.role as any;
 

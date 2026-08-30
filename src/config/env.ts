@@ -5,7 +5,7 @@ dotenv.config({ override: true });
 
 const envSchema = z.object({
   PORT: z.string().default('3000'),
-  MONGO_URI: z.string().url().or(z.string().startsWith('mongodb')).default('mongodb://localhost:27017/techyad'),
+  MONGO_URI: z.string().url().or(z.string().startsWith('mongodb')).optional(),
   JWT_SECRET: z.string().min(10).default('super_secret_key_change_me'),
   JWT_REFRESH_SECRET: z.string().min(10).default('super_secret_refresh_key_change_me'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
