@@ -1,0 +1,6 @@
+{
+  "name": "TechYad Backend",
+  "description": "Backend API for TechYad",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
