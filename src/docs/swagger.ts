@@ -5,10 +5,13 @@ import { learningPaths } from './paths/learning.paths.js';
 import { commercePaths } from './paths/commerce.paths.js';
 import { communityPaths } from './paths/community.paths.js';
 import { mediaPaths } from './paths/media.paths.js';
-import { livePaths } from './paths/live.paths.js';
 import { blogPaths } from './paths/blog.paths.js';
 import { notificationPaths } from './paths/notification.paths.js';
 import { supportPaths } from './paths/support.paths.js';
+import { classPaths } from './paths/class.paths.js';
+import { adminPaths } from './paths/admin.paths.js';
+import { instructorPaths } from './paths/instructor.paths.js';
+import { commentPaths } from './paths/comment.paths.js';
 
 export const swaggerDocument = {
   openapi: '3.0.0',
@@ -38,9 +41,12 @@ export const swaggerDocument = {
     ...commercePaths,
     ...communityPaths,
     ...mediaPaths,
-    ...livePaths,
     ...blogPaths,
     ...notificationPaths,
-    ...supportPaths
+    ...supportPaths,
+    ...classPaths,
+    ...adminPaths,
+    ...instructorPaths,
+    ...commentPaths
   }
 };

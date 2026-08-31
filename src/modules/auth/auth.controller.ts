@@ -20,6 +20,28 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+    avatar: user.avatar,
     role: user.role?.slug
   }, 'User profile retrieved successfully');
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  const result = await AuthService.updateProfile(req.user._id as string, req.body);
+  sendSuccess(res, {
+    id: result._id,
+    firstName: result.firstName,
+    lastName: result.lastName,
+    email: result.email,
+    avatar: result.avatar
+  }, 'Profile updated successfully');
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const result = await AuthService.forgotPassword(req.body.email);
+  sendSuccess(res, result, 'Forgot password request processed');
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const result = await AuthService.resetPassword(req.body.token, req.body.newPassword);
+  sendSuccess(res, result, 'Password reset successfully');
 };

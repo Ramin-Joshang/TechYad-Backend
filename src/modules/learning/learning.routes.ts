@@ -8,6 +8,9 @@ import { updateProgressSchema } from './learning.validation.js';
 const router = Router();
 const requireAuth = asyncHandler(authenticate);
 
+// --- Dashboard ---
+router.get('/me/dashboard', requireAuth, asyncHandler(Controller.getStudentDashboard));
+
 // --- Enrollments ---
 router.get('/me/enrollments', requireAuth, asyncHandler(Controller.getMyEnrollments));
 router.post('/courses/:courseId/enroll', requireAuth, asyncHandler(Controller.enrollFreeCourse));

@@ -12,6 +12,12 @@ export interface IEnrollment extends Document {
   amount: number;
   enrolledAt: Date;
   completedAt?: Date;
+  
+  // Progress tracking
+  progress: number;
+  completedLessons: number;
+  lastLessonId?: Types.ObjectId;
+  lastAccessedAt?: Date;
 }
 
 const enrollmentSchema = new Schema<IEnrollment>(
@@ -51,6 +57,12 @@ const enrollmentSchema = new Schema<IEnrollment>(
       default: Date.now,
     },
     completedAt: Date,
+    
+    // Progress tracking
+    progress: { type: Number, default: 0 },
+    completedLessons: { type: Number, default: 0 },
+    lastLessonId: { type: Schema.Types.ObjectId, ref: "Lesson" },
+    lastAccessedAt: Date
   },
   { timestamps: true }
 );

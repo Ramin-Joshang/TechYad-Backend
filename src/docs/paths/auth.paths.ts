@@ -61,6 +61,60 @@ export const authPaths = {
         '200': { description: 'User profile data' },
         '401': { description: 'Unauthorized' }
       }
+    },
+    patch: {
+      tags: ['Authentication'],
+      summary: 'Update current user profile',
+      security: [{ bearerAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                firstName: { type: 'string' },
+                lastName: { type: 'string' },
+                avatar: { type: 'string' }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        '200': { description: 'User profile updated' },
+        '401': { description: 'Unauthorized' }
+      }
+    }
+  },
+  '/auth/forgot-password': {
+    post: {
+      tags: ['Authentication'],
+      summary: 'Request password reset',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: { email: { type: 'string', format: 'email' } } }
+          }
+        }
+      },
+      responses: { '200': { description: 'Reset link sent' } }
+    }
+  },
+  '/auth/reset-password': {
+    post: {
+      tags: ['Authentication'],
+      summary: 'Reset password with token',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: { token: { type: 'string' }, newPassword: { type: 'string', minLength: 8 } } }
+          }
+        }
+      },
+      responses: { '200': { description: 'Password reset successful' } }
     }
   }
 };

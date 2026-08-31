@@ -3,6 +3,11 @@ import { LearningService } from './learning.service.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import { AuthRequest } from '../../common/middleware/auth.js';
 
+export const getStudentDashboard = async (req: AuthRequest, res: Response) => {
+  const result = await LearningService.getStudentDashboard(req.user._id as string);
+  sendSuccess(res, result, 'Dashboard data retrieved successfully');
+};
+
 export const enrollFreeCourse = async (req: AuthRequest, res: Response) => {
   const result = await LearningService.enrollInFreeCourse(req.user._id as string, req.params.courseId as string);
   sendSuccess(res, result, 'Successfully enrolled in course', 201);

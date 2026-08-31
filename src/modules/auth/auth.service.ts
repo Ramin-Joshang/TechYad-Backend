@@ -93,4 +93,46 @@ export class AuthService {
       refreshToken
     };
   }
+
+  static async updateProfile(userId: string, data: { firstName?: string, lastName?: string, avatar?: string }) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: data },
+      { new: true, runValidators: true }
+    ).populate('role');
+    
+    if (!user) throw new AppError('User not found', 404, 'NOT_FOUND');
+    return user;
+  }
+
+  static async forgotPassword(email: string) {
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Return success even if user not found for security (prevent email enumeration)
+      return { message: 'If this email is registered, a password reset link has been sent.' };
+    }
+    
+    // In a real app, generate a token, save to DB, and send an email
+    // For this mockup, we'll return a simulated token
+    const mockResetToken = `reset_${user._id.toString()}_${Date.now()}`;
+    return { 
+      message: 'Password reset link sent to email',
+      mockToken: mockResetToken // Only returning for testing purposes
+    };
+  }
+
+  static async resetPassword(token: string, newPassword: string) {
+    // In a real app, verify the token against DB
+    if (!token.startsWith('reset_')) {
+      throw new AppError('Invalid or expired password reset token', 400, 'INVALID_TOKEN');
+    }
+    
+    const userId = token.split('_')[1];
+    const passwordHash = await argon2.hash(newPassword);
+    
+    const user = await User.findByIdAndUpdate(userId, { passwordHash });
+    if (!user) throw new AppError('Invalid token', 400, 'INVALID_TOKEN');
+    
+    return { message: 'Password has been reset successfully' };
+  }
 }

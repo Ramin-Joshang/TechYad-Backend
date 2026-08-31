@@ -1,10 +1,41 @@
 import { Enrollment } from './enrollment.model.js';
 import { LessonProgress } from './lesson-progress.model.js';
+import { AssignmentSubmission } from './assignment-submission.model.js';
 import { Course } from '../courses/course.model.js';
 import { Lesson } from '../courses/lesson.model.js';
 import { AppError } from '../../common/errors/AppError.js';
+import { QuizAttempt } from './quiz-attempt.model.js';
+import { Order } from '../commerce/order.model.js';
 
 export class LearningService {
+  // --- Dashboard ---
+  static async getStudentDashboard(userId: string) {
+    const enrollments = await Enrollment.find({ userId, status: 'active' })
+      .populate('courseId', 'title slug thumbnail totalLessons')
+      .populate('lastLessonId', 'title slug')
+      .sort({ lastAccessedAt: -1 })
+      .limit(5);
+
+    const completedLessons = await LessonProgress.countDocuments({ userId, completed: true });
+    
+    const pendingAssignments = await AssignmentSubmission.countDocuments({ userId, status: 'submitted' });
+    
+    const latestQuizzes = await QuizAttempt.find({ userId })
+      .populate('quizId', 'title passMark')
+      .sort({ createdAt: -1 })
+      .limit(3);
+
+    return {
+      stats: {
+        activeCourses: enrollments.length,
+        completedLessons,
+        pendingAssignments
+      },
+      recentEnrollments: enrollments,
+      latestQuizzes
+    };
+  }
+
   // --- Enrollments ---
   static async enrollInFreeCourse(userId: string, courseId: string) {
     const course = await Course.findById(courseId);
@@ -26,7 +57,7 @@ export class LearningService {
 
   static async getMyEnrollments(userId: string) {
     return await Enrollment.find({ userId })
-      .populate('courseId', 'title slug thumbnail')
+      .populate('courseId', 'title slug thumbnail totalLessons')
       .sort({ enrolledAt: -1 });
   }
 
@@ -41,9 +72,10 @@ export class LearningService {
     const lesson = await Lesson.findById(lessonId);
     if (!lesson) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
 
+    let enrollment = null;
     // Only check enrollment if the lesson is not free
     if (!lesson.isFree) {
-      const enrollment = await Enrollment.findOne({ userId, courseId: lesson.courseId });
+      enrollment = await Enrollment.findOne({ userId, courseId: lesson.courseId });
       if (!enrollment) {
         throw new AppError('Must be enrolled to track progress for this lesson', 403, 'FORBIDDEN');
       }
@@ -64,6 +96,24 @@ export class LearningService {
       progressData,
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
+
+    // Update Enrollment progress
+    if (enrollment) {
+      const completedCount = await LessonProgress.countDocuments({ 
+        userId, 
+        courseId: lesson.courseId, 
+        completed: true 
+      });
+
+      const course = await Course.findById(lesson.courseId);
+      const total = course?.totalLessons || 1;
+      
+      enrollment.completedLessons = completedCount;
+      enrollment.progress = Math.round((completedCount / total) * 100);
+      enrollment.lastLessonId = lesson._id;
+      enrollment.lastAccessedAt = new Date();
+      await enrollment.save();
+    }
     
     return progress;
   }

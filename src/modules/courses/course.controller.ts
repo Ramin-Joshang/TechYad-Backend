@@ -18,14 +18,30 @@ export const getCourseBySlug = async (req: Request, res: Response) => {
   sendSuccess(res, result, 'Course retrieved successfully');
 };
 
+export const getRelatedCourses = async (req: Request, res: Response) => {
+  const result = await CourseService.getRelatedCourses(req.params.id as string);
+  sendSuccess(res, result, 'Related courses retrieved successfully');
+};
+
 export const updateCourse = async (req: AuthRequest, res: Response) => {
   const result = await CourseService.updateCourse(req.params.id as string, req.user._id, req.body);
   sendSuccess(res, result, 'Course updated successfully');
 };
 
+// Workflows
+export const requestReview = async (req: AuthRequest, res: Response) => {
+  const result = await CourseService.requestReview(req.params.id as string, req.user._id);
+  sendSuccess(res, result, 'Course submitted for review');
+};
+
 export const publishCourse = async (req: Request, res: Response) => {
   const result = await CourseService.publishCourse(req.params.id as string);
   sendSuccess(res, result, 'Course published successfully');
+};
+
+export const rejectCourse = async (req: Request, res: Response) => {
+  const result = await CourseService.rejectCourse(req.params.id as string, req.body.reason);
+  sendSuccess(res, result, 'Course rejected');
 };
 
 // Chapters
