@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
+import { GuestGuard } from '@/features/auth/components/guards/GuestGuard';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -22,7 +23,7 @@ export default function LoginPage() {
     try {
       const response = await authApi.login({ email, password });
       if (response.success) {
-        setAuth(response.data.user, response.data.token);
+        setAuth(response.data.user, response.data.accessToken);
         
         // Redirect based on role
         const role = response.data.user.role;
@@ -38,8 +39,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex-1 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+    <GuestGuard>
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">ورود به تک‌یاد</h1>
           <p className="text-gray-500 text-sm">برای ادامه ایمیل و رمز عبور خود را وارد کنید</p>
@@ -96,5 +98,6 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+    </GuestGuard>
   );
 }

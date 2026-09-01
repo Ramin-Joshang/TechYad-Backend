@@ -10,7 +10,8 @@ interface ApiResponse<T> {
 
 interface AuthResponse {
   user: User;
-  token: string;
+  accessToken: string;
+  refreshToken?: string;
 }
 
 export const authApi = {
@@ -25,4 +26,16 @@ export const authApi = {
   getMe: async () => {
     return api.get<any, ApiResponse<User>>('/auth/me');
   },
+  
+  updateProfile: async (userData: any) => {
+    return api.patch<any, ApiResponse<User>>('/auth/me', userData);
+  },
+
+  forgotPassword: async (email: string) => {
+    return api.post<any, ApiResponse<any>>('/auth/forgot-password', { email });
+  },
+
+  resetPassword: async (data: any) => {
+    return api.post<any, ApiResponse<any>>('/auth/reset-password', data);
+  }
 };

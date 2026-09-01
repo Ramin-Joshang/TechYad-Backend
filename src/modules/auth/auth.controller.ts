@@ -21,7 +21,8 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     lastName: user.lastName,
     email: user.email,
     avatar: user.avatar,
-    role: user.role?.slug
+    role: user.role?.slug,
+    permissions: user.role?.permissions || []
   }, 'User profile retrieved successfully');
 };
 

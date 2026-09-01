@@ -54,7 +54,8 @@ export class AuthService {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
-        role: studentRole.slug
+        role: studentRole.slug,
+        permissions: studentRole.permissions || []
       },
       accessToken,
       refreshToken
@@ -87,7 +88,8 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: role?.slug
+        role: role?.slug,
+        permissions: role?.permissions || []
       },
       accessToken,
       refreshToken

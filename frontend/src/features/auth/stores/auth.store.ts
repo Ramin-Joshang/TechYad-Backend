@@ -1,7 +1,8 @@
 import { create } from 'zustand';
+import Cookies from 'js-cookie';
 
 export interface User {
-  _id: string;
+  id: string; // the backend returns id in login/getMe response
   firstName: string;
   lastName: string;
   email: string;
@@ -23,29 +24,25 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+  token: typeof window !== 'undefined' ? Cookies.get('token') || null : null,
   isAuthenticated: false,
   isInitializing: true,
-
   setAuth: (user, token) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
+      Cookies.set('token', token, { expires: 30, secure: process.env.NODE_ENV === 'production' });
     }
     set({ user, token, isAuthenticated: true, isInitializing: false });
   },
-
   updateUser: (updatedUser) => {
     set((state) => ({
       user: state.user ? { ...state.user, ...updatedUser } : null,
     }));
   },
-
   logout: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+      Cookies.remove('token');
     }
     set({ user: null, token: null, isAuthenticated: false });
   },
-
   setInitializing: (status) => set({ isInitializing: status }),
 }));
