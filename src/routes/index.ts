@@ -15,6 +15,7 @@ import supportRoutes from '../modules/support/support.routes.js';
 import instructorRoutes from '../modules/instructors/instructor.routes.js';
 import classRoutes from '../modules/classes/class.routes.js';
 import adminRoutes from '../modules/admin/admin.routes.js';
+import homeRoutes from '../modules/home/home.routes.js';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/auth', authRoutes);
+router.use('/', homeRoutes);
 router.use('/', catalogRoutes);
 router.use('/', courseRoutes);
 router.use('/', learningRoutes);
