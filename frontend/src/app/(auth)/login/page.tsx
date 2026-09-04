@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       const response = await authApi.login({ email, password });
       if (response.success) {
-        setAuth(response.data.user, response.data.accessToken);
+        setAuth(response.data.user);
         
         // Redirect based on role
         const role = response.data.user.role;

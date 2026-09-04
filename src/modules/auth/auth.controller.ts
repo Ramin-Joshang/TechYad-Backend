@@ -3,14 +3,48 @@ import { AuthService } from './auth.service.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import { AuthRequest } from '../../common/middleware/auth.js';
 
+const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSiteMode: 'none' | 'lax' = isProduction ? 'none' : 'lax';
+  
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: sameSiteMode,
+    maxAge: 15 * 60 * 1000, // 15 mins
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: sameSiteMode,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+};
+
 export const register = async (req: Request, res: Response) => {
   const result = await AuthService.register(req.body);
-  sendSuccess(res, result, 'User registered successfully', 201);
+  setAuthCookies(res, result.accessToken, result.refreshToken);
+  sendSuccess(res, { user: result.user }, 'User registered successfully', 201);
 };
 
 export const login = async (req: Request, res: Response) => {
   const result = await AuthService.login(req.body);
-  sendSuccess(res, result, 'Login successful');
+  setAuthCookies(res, result.accessToken, result.refreshToken);
+  sendSuccess(res, { user: result.user }, 'Login successful');
+};
+
+export const logout = async (req: Request, res: Response) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSiteMode: 'none' | 'lax' = isProduction ? 'none' : 'lax';
+  
+  const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: sameSiteMode,
+  };
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
+  sendSuccess(res, null, 'Logout successful');
 };
 
 export const getMe = async (req: AuthRequest, res: Response) => {

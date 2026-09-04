@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import routes from './routes/index.js';
@@ -23,8 +24,9 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Body Parser
+// Body & Cookie Parser
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 // API Routes
 app.use('/api/v1', routes);

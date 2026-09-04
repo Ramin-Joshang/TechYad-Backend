@@ -10,8 +10,6 @@ interface ApiResponse<T> {
 
 interface AuthResponse {
   user: User;
-  accessToken: string;
-  refreshToken?: string;
 }
 
 export const authApi = {
@@ -21,6 +19,10 @@ export const authApi = {
   
   register: async (userData: any) => {
     return api.post<any, ApiResponse<AuthResponse>>('/auth/register', userData);
+  },
+
+  logout: async () => {
+    return api.post<any, ApiResponse<null>>('/auth/logout');
   },
 
   getMe: async () => {
