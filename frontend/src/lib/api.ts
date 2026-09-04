@@ -22,16 +22,8 @@ api.interceptors.request.use(
 
 // Add a response interceptor to handle common errors like 401 Unauthorized
 api.interceptors.response.use(
-  (response) => response.data, // Unwrap the response to directly return the data
+  (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        // If not already on the login page, redirect
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
-        }
-      }
-    }
     return Promise.reject(error);
   }
 );
