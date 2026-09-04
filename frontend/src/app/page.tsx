@@ -1,5 +1,5 @@
-import { HomeContainer } from '@/features/home/components/HomeContainer';
+import { HomeDataView } from "@/components/home/HomeDataView";
 
-export default function Home() {
-  return <HomeContainer />;
+export default function HomePage() {
+  return <HomeDataView />;
 }

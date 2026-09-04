@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Instagram, Twitter, Linkedin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Link2, Camera, Briefcase } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -20,13 +20,13 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
-                <Instagram className="w-5 h-5" />
+                <Camera className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-400 hover:text-white transition-colors">
-                <Twitter className="w-5 h-5" />
+                <Link2 className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-700 hover:text-white transition-colors">
-                <Linkedin className="w-5 h-5" />
+                <Briefcase className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -73,7 +73,7 @@ export function Footer() {
               </li>
             </ul>
             
-            <form className="relative" onSubmit={(e) => e.preventDefault()}>
+            <form className="relative" action="#">
               <input 
                 type="email" 
                 placeholder="ایمیل خود را وارد کنید" 

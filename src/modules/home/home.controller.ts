@@ -1,66 +1,138 @@
-import { Request, Response } from 'express';
-import { sendSuccess } from '../../common/utils/response.js';
+import { Request, Response, NextFunction } from "express";
+import { Course } from "../courses/course.model.js";
+import { Category } from "../catalog/category.model.js";
+import { Article } from "../blog/article.model.js";
+import { InstructorProfile } from "../instructors/instructor-profile.model.js";
+import { Testimonial } from "./testimonial.model.js";
+import { User } from "../auth/user.model.js";
+import { Role } from "../auth/role.model.js";
 
-export const getHomeData = async (req: Request, res: Response) => {
-  // We can return a rich set of data for the homepage.
-  // Ideally this would query various collections, but to ensure a populated UI
-  // out of the box, we'll return structured data representing what would be in the DB.
+// Mock data seeder
+const seedData = async () => {
+  const courseCount = await Course.countDocuments();
+  if (courseCount > 0) return; // Already seeded
 
-  const data = {
-    categories: [
-      { id: '1', title: 'برنامه‌نویسی', icon: 'Code', courseCount: 120 },
-      { id: '2', title: 'طراحی گرافیک', icon: 'PenTool', courseCount: 85 },
-      { id: '3', title: 'کسب و کار', icon: 'Briefcase', courseCount: 64 },
-      { id: '4', title: 'زبان‌های خارجی', icon: 'Languages', courseCount: 210 },
-      { id: '5', title: 'هوش مصنوعی', icon: 'Brain', courseCount: 45 },
-      { id: '6', title: 'موسیقی', icon: 'Music', courseCount: 30 },
-      { id: '7', title: 'عکاسی', icon: 'Camera', courseCount: 55 },
-      { id: '8', title: 'بازاریابی', icon: 'LineChart', courseCount: 90 },
-    ],
-    popularCourses: [
-      { id: 'c1', title: 'آموزش جامع React و Next.js', slug: 'react-nextjs', instructor: 'علی محمدی', instructorAvatar: 'https://i.pravatar.cc/150?u=ali', rating: 4.8, studentsCount: 1540, price: 1200000, originalPrice: 1500000, duration: '45 ساعت', level: 'پیشرفته', coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=800&auto=format&fit=crop' },
-      { id: 'c2', title: 'طراحی رابط کاربری با Figma', slug: 'ui-ux-figma', instructor: 'سارا احمدی', instructorAvatar: 'https://i.pravatar.cc/150?u=sara', rating: 4.9, studentsCount: 980, price: 850000, originalPrice: 950000, duration: '20 ساعت', level: 'مبتدی تا پیشرفته', coverImage: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=800&auto=format&fit=crop' },
-      { id: 'c3', title: 'دوره جامع Python', slug: 'python-masterclass', instructor: 'رضا کریمی', instructorAvatar: 'https://i.pravatar.cc/150?u=reza', rating: 4.7, studentsCount: 2100, price: 900000, originalPrice: null, duration: '60 ساعت', level: 'مبتدی', coverImage: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?q=80&w=800&auto=format&fit=crop' },
-      { id: 'c4', title: 'دیجیتال مارکتینگ و سئو', slug: 'digital-marketing', instructor: 'مینا رضایی', instructorAvatar: 'https://i.pravatar.cc/150?u=mina', rating: 4.6, studentsCount: 1100, price: 650000, originalPrice: 800000, duration: '35 ساعت', level: 'متوسط', coverImage: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?q=80&w=800&auto=format&fit=crop' },
-    ],
-    newCourses: [
-      { id: 'n1', title: 'توسعه برنامه‌های موبایل با Flutter', slug: 'flutter-dev', instructor: 'امیر حسینی', instructorAvatar: 'https://i.pravatar.cc/150?u=amir', rating: 5.0, studentsCount: 120, price: 1400000, originalPrice: 1800000, duration: '50 ساعت', level: 'پیشرفته', coverImage: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=800&auto=format&fit=crop' },
-      { id: 'n2', title: 'آموزش Node.js و Express', slug: 'nodejs-express', instructor: 'محمد اکبری', instructorAvatar: 'https://i.pravatar.cc/150?u=mohammad', rating: 4.5, studentsCount: 300, price: 1100000, originalPrice: null, duration: '40 ساعت', level: 'متوسط', coverImage: 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=800&auto=format&fit=crop' },
-      { id: 'n3', title: 'مبانی هوش مصنوعی', slug: 'ai-basics', instructor: 'دکتر علوی', instructorAvatar: 'https://i.pravatar.cc/150?u=alavi', rating: 4.8, studentsCount: 450, price: 0, originalPrice: 500000, duration: '15 ساعت', level: 'مبتدی', coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop' },
-      { id: 'n4', title: 'آموزش عکاسی پرتره', slug: 'portrait-photography', instructor: 'لیلا امینی', instructorAvatar: 'https://i.pravatar.cc/150?u=leila', rating: 4.9, studentsCount: 280, price: 750000, originalPrice: 900000, duration: '12 ساعت', level: 'همه سطوح', coverImage: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=800&auto=format&fit=crop' },
-    ],
-    freeCourses: [
-      { id: 'f1', title: 'شروع کار با Git و GitHub', slug: 'git-github-basics', instructor: 'علی محمدی', instructorAvatar: 'https://i.pravatar.cc/150?u=ali', rating: 4.7, studentsCount: 5400, price: 0, originalPrice: null, duration: '4 ساعت', level: 'مبتدی', coverImage: 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=800&auto=format&fit=crop' },
-      { id: 'f2', title: 'مقدمه‌ای بر جاوااسکریپت', slug: 'intro-javascript', instructor: 'سارا احمدی', instructorAvatar: 'https://i.pravatar.cc/150?u=sara', rating: 4.6, studentsCount: 3200, price: 0, originalPrice: null, duration: '6 ساعت', level: 'مبتدی', coverImage: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?q=80&w=800&auto=format&fit=crop' },
-      { id: 'f3', title: 'اصول فن بیان', slug: 'public-speaking-basics', instructor: 'رضا کریمی', instructorAvatar: 'https://i.pravatar.cc/150?u=reza', rating: 4.8, studentsCount: 4100, price: 0, originalPrice: null, duration: '3 ساعت', level: 'مبتدی', coverImage: 'https://images.unsplash.com/photo-1475721025599-cf1dea14b46c?q=80&w=800&auto=format&fit=crop' },
-      { id: 'f4', title: 'مبانی طراحی وب (HTML/CSS)', slug: 'web-design-basics', instructor: 'مینا رضایی', instructorAvatar: 'https://i.pravatar.cc/150?u=mina', rating: 4.5, studentsCount: 6500, price: 0, originalPrice: null, duration: '8 ساعت', level: 'مبتدی', coverImage: 'https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?q=80&w=800&auto=format&fit=crop' },
-    ],
-    topInstructors: [
-      { id: 'i1', name: 'علی محمدی', specialty: 'برنامه‌نویسی وب', avatar: 'https://i.pravatar.cc/300?u=ali', students: 15000, courses: 12, rating: 4.9 },
-      { id: 'i2', name: 'سارا احمدی', specialty: 'طراحی محصول (UI/UX)', avatar: 'https://i.pravatar.cc/300?u=sara', students: 12000, courses: 8, rating: 4.8 },
-      { id: 'i3', name: 'رضا کریمی', specialty: 'علم داده و هوش مصنوعی', avatar: 'https://i.pravatar.cc/300?u=reza', students: 9500, courses: 5, rating: 4.7 },
-      { id: 'i4', name: 'مینا رضایی', specialty: 'دیجیتال مارکتینگ', avatar: 'https://i.pravatar.cc/300?u=mina', students: 8000, courses: 10, rating: 4.8 },
-    ],
-    onlineClasses: [
-      { id: 'oc1', title: 'بوت‌کمپ برنامه‌نویسی فرانت‌اند', startDate: '۱۵ مهر ۱۴۰۳', capacity: 30, enrolled: 25, price: 4500000, type: 'online' },
-      { id: 'oc2', title: 'کارگاه عملی سئو پیشرفته', startDate: '۲۰ مهر ۱۴۰۳', capacity: 50, enrolled: 48, price: 1200000, type: 'online' },
-      { id: 'oc3', title: 'کلاس تعاملی مکالمه زبان انگلیسی', startDate: '۱ آبان ۱۴۰۳', capacity: 15, enrolled: 10, price: 800000, type: 'online' },
-    ],
-    inPersonClasses: [
-      { id: 'ip1', title: 'دوره جامع عکاسی استودیویی', startDate: '۱۰ مهر ۱۴۰۳', location: 'تهران، شعبه مرکزی', capacity: 15, enrolled: 12, price: 5500000, type: 'in-person' },
-      { id: 'ip2', title: 'کارگاه آموزش باریستا و مدیریت کافه', startDate: '۲۵ مهر ۱۴۰۳', location: 'تهران، شعبه غرب', capacity: 10, enrolled: 10, price: 3000000, type: 'in-person' },
-    ],
-    testimonials: [
-      { id: 't1', text: 'دوره React فوق‌العاده بود. پروژه‌های عملی باعث شد بتونم به راحتی وارد بازار کار بشم و الان به عنوان جونیور مشغول به کار هستم.', author: 'امید علوی', role: 'توسعه‌دهنده فرانت‌اند', avatar: 'https://i.pravatar.cc/150?u=omid' },
-      { id: 't2', text: 'اساتید تک‌یاد واقعا دلسوز و حرفه‌ای هستند. پشتیبانی دوره‌ها بی‌نظیره و همیشه پاسخگوی سوالات ما بودن.', author: 'نگین رستمی', role: 'طراح UI/UX', avatar: 'https://i.pravatar.cc/150?u=negin' },
-      { id: 't3', text: 'من کلاس‌های آنلاین رو شرکت کردم. کیفیت ویدیوها و پلتفرم برگزاری کلاس خیلی روان و بدون مشکل بود.', author: 'محمد طاهری', role: 'دانشجو', avatar: 'https://i.pravatar.cc/150?u=mohammadt' },
-    ],
-    blogPosts: [
-      { id: 'b1', title: 'نقشه راه یادگیری برنامه‌نویسی در سال ۲۰۲۴', slug: 'programming-roadmap-2024', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800&auto=format&fit=crop', date: '۱۲ شهریور ۱۴۰۳', author: 'علی محمدی', readTime: '۷ دقیقه' },
-      { id: 'b2', title: '۱۰ ابزار ضروری برای طراحان رابط کاربری', slug: 'essential-ui-tools', image: 'https://images.unsplash.com/photo-1542744094-3a31f272c490?q=80&w=800&auto=format&fit=crop', date: '۱۰ شهریور ۱۴۰۳', author: 'سارا احمدی', readTime: '۵ دقیقه' },
-      { id: 'b3', title: 'چگونه در مصاحبه‌های شغلی موفق شویم؟', slug: 'job-interview-tips', image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=800&auto=format&fit=crop', date: '۵ شهریور ۱۴۰۳', author: 'تیم تحریریه تک‌یاد', readTime: '۱۰ دقیقه' },
-    ]
-  };
+  console.log("Seeding initial data...");
 
-  sendSuccess(res, data, 'Home data retrieved successfully');
+  // Get some user to be creator
+  let user = await User.findOne();
+  if (!user) {
+    const role = await Role.findOne();
+    user = await User.create({
+      firstName: "Admin",
+      lastName: "User",
+      email: "admin@techyad.local",
+      password: "password123",
+      role: role?._id,
+    });
+  }
+
+  // Create Categories
+  const cat1 = await Category.create({ name: "برنامه‌نویسی", slug: "programming", description: "آموزش زبان‌های برنامه‌نویسی" });
+  const cat2 = await Category.create({ name: "طراحی سایت", slug: "web-design", description: "آموزش طراحی و توسعه وب" });
+  const cat3 = await Category.create({ name: "هوش مصنوعی", slug: "ai", description: "آموزش ماشین لرنینگ و دیپ لرنینگ" });
+  const cat4 = await Category.create({ name: "شبکه و امنیت", slug: "network-security", description: "آموزش شبکه و امنیت اطلاعات" });
+
+  // Create Instructors
+  const inst1 = await InstructorProfile.create({
+    userId: user._id,
+    title: "مهندس نرم‌افزار",
+    bio: "متخصص توسعه وب و مدرس برنامه‌نویسی با ۱۰ سال سابقه",
+    avatar: "https://i.pravatar.cc/150?u=inst1",
+    specialties: ["React", "Node.js", "TypeScript"],
+    education: [],
+    socialLinks: {},
+    isApproved: true,
+  });
+
+  // Create Courses
+  const coursesData = [
+    { title: "دوره جامع متخصص React", slug: "react-masterclass", price: 1500000, categoryId: cat1._id, tags: ["آنلاین", "React", "Frontend"], isNew: false },
+    { title: "آموزش صفر تا صد Node.js", slug: "nodejs-zero-to-hero", price: 1200000, categoryId: cat1._id, tags: ["آنلاین", "Node.js", "Backend"], isNew: true },
+    { title: "یادگیری عمیق با پایتون", slug: "deep-learning-python", price: 2000000, categoryId: cat3._id, tags: ["حضوری", "Python", "AI"], isNew: true },
+    { title: "مبانی طراحی رابط کاربری (UI/UX)", slug: "ui-ux-basics", price: 0, categoryId: cat2._id, tags: ["آنلاین", "UI", "UX", "رایگان"], isNew: false },
+    { title: "آموزش جامع امنیت شبکه", slug: "network-security-pro", price: 1800000, categoryId: cat4._id, tags: ["حضوری", "Network", "Security"], isNew: false },
+    { title: "دوره رایگان شروع با HTML/CSS", slug: "html-css-starter", price: 0, categoryId: cat2._id, tags: ["آنلاین", "HTML", "CSS", "رایگان"], isNew: true },
+  ];
+
+  for (const cData of coursesData) {
+    await Course.create({
+      title: cData.title,
+      slug: cData.slug,
+      shortDescription: "یک دوره عالی و کاربردی برای ورود به بازار کار",
+      thumbnail: `https://picsum.photos/seed/${cData.slug}/400/250`,
+      instructors: [user._id],
+      categoryId: cData.categoryId,
+      price: cData.price,
+      totalDuration: 1200,
+      totalLessons: 24,
+      tags: cData.tags,
+      status: "published",
+      createdBy: user._id,
+      publishedAt: new Date(),
+    });
+  }
+
+  // Create Articles
+  const articlesData = [
+    { title: "چگونه برنامه‌نویسی را شروع کنیم؟", slug: "how-to-start-programming" },
+    { title: "بهترین فریم‌ورک‌های فرانت‌اند در ۲۰۲۴", slug: "best-frontend-frameworks-2024" },
+    { title: "آینده هوش مصنوعی در توسعه نرم‌افزار", slug: "ai-future-in-software" },
+  ];
+  for (const aData of articlesData) {
+    await Article.create({
+      title: aData.title,
+      slug: aData.slug,
+      excerpt: "مقاله‌ای جذاب درباره دنیای تکنولوژی و برنامه‌نویسی",
+      content: "متن کامل مقاله در اینجا قرار می‌گیرد...",
+      thumbnail: `https://picsum.photos/seed/${aData.slug}/400/250`,
+      authorId: user._id,
+      tags: ["تکنولوژی", "برنامه‌نویسی"],
+      status: "published",
+      publishedAt: new Date(),
+    });
+  }
+
+  // Create Testimonials
+  await Testimonial.create([
+    { studentName: "علی احمدی", courseName: "متخصص React", avatar: "https://i.pravatar.cc/150?u=ali", content: "بهترین دوره‌ای که تا حالا دیدم. استاد بسیار مسلط بودند.", rating: 5 },
+    { studentName: "سارا محمدی", courseName: "Node.js", avatar: "https://i.pravatar.cc/150?u=sara", content: "مطالب خیلی خوب و کاربردی بیان شده بود.", rating: 4 },
+    { studentName: "رضا حسینی", courseName: "طراحی UI/UX", avatar: "https://i.pravatar.cc/150?u=reza", content: "پروژه محور بودن دوره خیلی به یادگیریم کمک کرد.", rating: 5 },
+  ]);
+
+  console.log("Mock data seeded successfully.");
+};
+
+export const getHomeData = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await seedData();
+
+    const categories = await Category.find({ isActive: true }).limit(8);
+    const popularCourses = await Course.find({ status: "published" }).sort({ totalLessons: -1 }).limit(4).populate('instructors', 'firstName lastName avatar');
+    const newCourses = await Course.find({ status: "published" }).sort({ createdAt: -1 }).limit(4).populate('instructors', 'firstName lastName avatar');
+    const freeCourses = await Course.find({ status: "published", price: 0 }).limit(4).populate('instructors', 'firstName lastName avatar');
+    const onlineClasses = await Course.find({ status: "published", tags: "آنلاین" }).limit(4).populate('instructors', 'firstName lastName avatar');
+    const inPersonClasses = await Course.find({ status: "published", tags: "حضوری" }).limit(4).populate('instructors', 'firstName lastName avatar');
+    const topInstructors = await InstructorProfile.find({ isApproved: true }).limit(4).populate('userId', 'firstName lastName avatar');
+    const latestArticles = await Article.find({ status: "published" }).sort({ createdAt: -1 }).limit(4);
+    const testimonials = await Testimonial.find().limit(6);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        categories,
+        popularCourses,
+        newCourses,
+        freeCourses,
+        onlineClasses,
+        inPersonClasses,
+        topInstructors,
+        latestArticles,
+        testimonials,
+      }
+    });
+  } catch (error) {
+    console.error("Error in getHomeData:", error);
+    next(error);
+  }
 };

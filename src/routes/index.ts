@@ -24,8 +24,8 @@ router.get('/health', (req, res) => {
   sendSuccess(res, { timestamp: new Date().toISOString() }, 'System is healthy');
 });
 
+router.use('/home', homeRoutes);
 router.use('/auth', authRoutes);
-router.use('/', homeRoutes);
 router.use('/', catalogRoutes);
 router.use('/', courseRoutes);
 router.use('/', learningRoutes);

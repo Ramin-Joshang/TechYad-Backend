@@ -16,8 +16,10 @@
     "start": "PORT=3001 node dist/server.js & npm run start --prefix frontend -- -p 3000"
   },
   "dependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/js-cookie": "^3.0.6",
     "argon2": "^0.45.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
