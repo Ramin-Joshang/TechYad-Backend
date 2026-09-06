@@ -11,7 +11,6 @@ import { Advantages } from './Advantages';
 import { Testimonials } from './Testimonials';
 import { LatestArticles } from './LatestArticles';
 import { CTA } from './CTA';
-import { Footer } from '../layout/Footer';
 
 export function HomeDataView() {
   const { data, isLoading, error } = useQuery({
@@ -44,7 +43,6 @@ export function HomeDataView() {
       <Testimonials data={d.testimonials} />
       <LatestArticles data={d.blogPosts || d.latestArticles} />
       <CTA />
-      <Footer />
     </div>
   );
 }

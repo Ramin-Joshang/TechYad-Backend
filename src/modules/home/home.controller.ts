@@ -22,7 +22,7 @@ const seedData = async () => {
       firstName: "Admin",
       lastName: "User",
       email: "admin@techyad.local",
-      password: "password123",
+      passwordHash: "dummyHash",
       role: role?._id,
     });
   }

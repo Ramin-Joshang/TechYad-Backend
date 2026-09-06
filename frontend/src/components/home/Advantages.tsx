@@ -1,11 +1,11 @@
-import { Shield, Clock, Video, Certificate } from "lucide-react";
+import { Shield, Clock, Video, Award } from "lucide-react";
 
 export function Advantages() {
   const items = [
     { icon: Shield, title: "تضمین کیفیت", desc: "بازگشت وجه در صورت عدم رضایت" },
     { icon: Video, title: "دسترسی مادام‌العمر", desc: "آپدیت رایگان دوره‌های خریداری شده" },
     { icon: Clock, title: "پشتیبانی ۲۴/۷", desc: "رفع اشکال توسط اساتید و منتورها" },
-    { icon: Certificate, title: "مدرک معتبر", desc: "ارائه گواهی پایان دوره دوزبانه" },
+    { icon: Award, title: "مدرک معتبر", desc: "ارائه گواهی پایان دوره دوزبانه" },
   ];
   return (
     <section className="py-20 bg-blue-600 text-white relative overflow-hidden">
