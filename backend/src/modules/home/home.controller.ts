@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import { Course } from "../courses/course.model.js";
 import { Category } from "../catalog/category.model.js";
 import { Article } from "../blog/article.model.js";
@@ -79,6 +80,7 @@ const seedData = async () => {
     { title: "بهترین فریم‌ورک‌های فرانت‌اند در ۲۰۲۴", slug: "best-frontend-frameworks-2024" },
     { title: "آینده هوش مصنوعی در توسعه نرم‌افزار", slug: "ai-future-in-software" },
   ];
+
   for (const aData of articlesData) {
     await Article.create({
       title: aData.title,
@@ -105,6 +107,14 @@ const seedData = async () => {
 
 export const getHomeData = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+       return res.status(503).json({
+          success: false,
+          message: "Database connection is not established. Please ensure MongoDB is running locally (port 27017) or check your MONGO_URI.",
+          data: {}
+       });
+    }
+
     await seedData();
 
     const categories = await Category.find({ isActive: true }).limit(8);
