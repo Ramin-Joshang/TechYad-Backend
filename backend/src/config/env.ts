@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config({ override: true });
+// Load from current directory or parent directory
+dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: true });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env'), override: true });
 
 const envSchema = z.object({
   PORT: z.string().default('3000'),
