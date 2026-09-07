@@ -24,6 +24,10 @@ export interface ICourse extends Document {
   levelId?: Types.ObjectId;
 
   price: number;
+  discountPrice?: number;
+  averageRating: number;
+  reviewCount: number;
+  studentCount: number;
 
   totalDuration: number;
   totalLessons: number;
@@ -94,6 +98,22 @@ const courseSchema = new Schema<ICourse>(
       type: Number,
       required: true,
       min: 0,
+      default: 0,
+    },
+    discountPrice: {
+      type: Number,
+      min: 0,
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+    studentCount: {
+      type: Number,
       default: 0,
     },
     totalDuration: {
