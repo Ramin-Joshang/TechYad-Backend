@@ -4,6 +4,7 @@ export const metadata = {
   title: 'پروفایل استاد | TechYad',
 };
 
-export default function InstructorProfilePage({ params }: { params: { id: string } }) {
-  return <InstructorProfileContainer id={params.id} />;
+export default async function InstructorProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  return <InstructorProfileContainer id={resolvedParams.id} />;
 }

@@ -5,15 +5,12 @@ export const metadata = {
   title: 'جزئیات دوره | TechYad',
 };
 
-export default function CoursePage({ params }: { params: { slug: string } }) {
+export default async function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">درحال بارگذاری دوره...</div>}>
-      <CourseDetailsWrapper params={params} />
+      <CourseDetailsContainer slug={resolvedParams.slug} />
     </Suspense>
   );
-}
-
-async function CourseDetailsWrapper({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
-  const resolvedParams = await params;
-  return <CourseDetailsContainer slug={resolvedParams.slug} />;
 }
