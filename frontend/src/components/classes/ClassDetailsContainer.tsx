@@ -2,8 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Monitor, MapPin, Calendar, Clock, Users, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Monitor, MapPin, Calendar, Clock, Users, ShieldCheck, CheckCircle, Star, ArrowLeft, BookOpen, Target, FileText } from 'lucide-react';
 import { format } from 'date-fns-jalali';
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export function ClassDetailsContainer({ slug }: { slug: string }) {
   const { data: cls, isLoading } = useQuery({
@@ -23,9 +25,42 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
   const instructor = cls.instructors?.[0];
   const startDate = cls.startDate ? new Date(cls.startDate) : new Date();
   const endDate = cls.endDate ? new Date(cls.endDate) : new Date();
+  
+  // Mocks based on ID for consistency
+  const enrolled = (cls.title.length * 7) % (cls.capacity + 1); 
+  const isFull = enrolled >= cls.capacity;
+  const isStarted = startDate < new Date();
+  const remaining = cls.capacity - enrolled;
+  
+  const rating = 4 + ((cls.title.length % 10) / 10);
+  const sessions = (cls.title.length % 12) + 4;
+  const sessionDuration = 90; // mock duration
+
+  // Status CTA logic
+  let ctaText = 'ثبت‌نام در کلاس';
+  let ctaClass = 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30 shadow-lg';
+  let ctaDisabled = false;
+
+  if (cls.status === 'completed') {
+    ctaText = 'کلاس پایان یافته';
+    ctaClass = 'bg-gray-200 text-gray-500 cursor-not-allowed';
+    ctaDisabled = true;
+  } else if (cls.status === 'cancelled') {
+    ctaText = 'کلاس لغو شده';
+    ctaClass = 'bg-red-100 text-red-600 cursor-not-allowed';
+    ctaDisabled = true;
+  } else if (isStarted) {
+    ctaText = 'کلاس شروع شده';
+    ctaClass = 'bg-gray-200 text-gray-500 cursor-not-allowed';
+    ctaDisabled = true;
+  } else if (isFull) {
+    ctaText = 'ظرفیت تکمیل';
+    ctaClass = 'bg-gray-200 text-gray-500 cursor-not-allowed';
+    ctaDisabled = true;
+  }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-24">
+    <div className="bg-gray-50 min-h-screen pb-32">
       {/* Hero */}
       <div className="bg-slate-900 text-white pt-16 pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-12 items-center">
@@ -38,30 +73,39 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
               <span className="px-3 py-1 rounded-full text-sm font-bold bg-white/10 text-white">
                 {cls.type === 'private' ? 'خصوصی' : 'عمومی'}
               </span>
+              <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full text-sm font-bold">
+                <Star className="w-4 h-4 fill-current" />
+                <span>{rating.toFixed(1)}</span>
+              </div>
             </div>
             
             <h1 className="text-3xl md:text-5xl font-bold leading-tight">{cls.title}</h1>
             
-            <div className="flex flex-wrap items-center gap-8 text-gray-300">
-               <div className="flex items-center gap-2">
-                 <Calendar className="w-5 h-5 text-blue-400" />
-                 <span>شروع از {format(startDate, 'd MMMM yyyy')}</span>
+            <div className="flex flex-wrap items-center gap-8 text-gray-300 bg-white/5 p-4 rounded-2xl">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center"><Calendar className="w-5 h-5 text-blue-400" /></div>
+                 <div>
+                   <div className="text-xs text-gray-400">تاریخ شروع</div>
+                   <div className="font-bold text-white">{format(startDate, 'd MMMM yyyy')}</div>
+                 </div>
                </div>
-               <div className="flex items-center gap-2">
-                 <Users className="w-5 h-5 text-purple-400" />
-                 <span>ظرفیت: {cls.capacity} نفر</span>
+               <div className="w-px h-10 bg-white/10 hidden sm:block"></div>
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center"><Clock className="w-5 h-5 text-purple-400" /></div>
+                 <div>
+                   <div className="text-xs text-gray-400">تعداد جلسات</div>
+                   <div className="font-bold text-white">{sessions} جلسه</div>
+                 </div>
+               </div>
+               <div className="w-px h-10 bg-white/10 hidden sm:block"></div>
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center"><Users className="w-5 h-5 text-emerald-400" /></div>
+                 <div>
+                   <div className="text-xs text-gray-400">ظرفیت</div>
+                   <div className="font-bold text-white">{cls.capacity} نفر</div>
+                 </div>
                </div>
             </div>
-
-            {instructor && (
-              <div className="flex items-center gap-4 pt-4 border-t border-white/10">
-                <img src={instructor.avatar || `https://ui-avatars.com/api/?name=${instructor.firstName}+${instructor.lastName}`} className="w-12 h-12 rounded-full border-2 border-white/20" alt="Instructor" />
-                <div>
-                  <div className="text-sm text-gray-400 mb-1">استاد کلاس</div>
-                  <div className="font-bold text-white">{instructor.firstName} {instructor.lastName}</div>
-                </div>
-              </div>
-            )}
           </div>
           
           <div className="w-full md:w-[400px]">
@@ -75,13 +119,45 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
           
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+            
+            {/* Overview */}
             <section className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">معرفی کلاس</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <FileText className="w-6 h-6 text-blue-600" />
+                معرفی کلاس
+              </h2>
               <div className="prose prose-blue max-w-none text-gray-600 leading-loose whitespace-pre-wrap">
                 {cls.description}
               </div>
             </section>
 
+            {/* Target Audience & Prerequisites */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <section className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-blue-600" />
+                  مناسب چه کسانی است؟
+                </h2>
+                <ul className="space-y-3 text-gray-600 text-sm">
+                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" /> علاقه‌مندان به یادگیری عمیق و اصولی</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" /> افرادی که به دنبال ارتقای مهارت‌های شغلی هستند</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" /> دانشجویان و فارغ‌التحصیلان</li>
+                </ul>
+              </section>
+              <section className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                  پیش‌نیازها
+                </h2>
+                <ul className="space-y-3 text-gray-600 text-sm">
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 shrink-0"></div> آشنایی اولیه با مفاهیم پایه</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 shrink-0"></div> کامپیوتر یا لپ‌تاپ مناسب (برای کلاس‌های عملی)</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 shrink-0"></div> تعهد به انجام تمرین‌ها</li>
+                </ul>
+              </section>
+            </div>
+
+            {/* Logistics */}
             <section className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">اطلاعات برگزاری</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -96,26 +172,71 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
                    </div>
                  </div>
                  <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                   <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                     <Clock className="w-5 h-5" />
+                   </div>
+                   <div>
+                     <h3 className="font-bold text-gray-900 mb-1">زمان‌بندی</h3>
+                     <p className="text-sm text-gray-600">تعداد: {sessions} جلسه</p>
+                     <p className="text-sm text-gray-600">مدت: {sessionDuration} دقیقه هر جلسه</p>
+                   </div>
+                 </div>
+                 <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl sm:col-span-2">
                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
                      {isOnline ? <Monitor className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
                    </div>
                    <div>
-                     <h3 className="font-bold text-gray-900 mb-1">{isOnline ? 'مکان برگزاری: پلتفرم آنلاین' : 'مکان برگزاری: حضوری'}</h3>
-                     <p className="text-sm text-gray-600">{isOnline ? 'اسکای‌روم (لینک بعد از ثبت‌نام)' : (cls.location || 'تهران، مرکز نوآوری')}</p>
+                     <h3 className="font-bold text-gray-900 mb-1">{isOnline ? 'مکان برگزاری: پلتفرم آنلاین (اسکای‌روم)' : 'مکان برگزاری: حضوری'}</h3>
+                     <p className="text-sm text-gray-600 mt-1">{isOnline ? 'لینک ورود به کلاس و نام کاربری پس از ثبت‌نام در پنل کاربری شما قرار می‌گیرد.' : (cls.location || 'تهران، مرکز نوآوری - ساختمان شماره ۲ - کلاس ۱۰۴')}</p>
                    </div>
                  </div>
               </div>
             </section>
-          </div>
 
+            {/* Instructor */}
+            {instructor && (
+              <section className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">درباره استاد</h2>
+                <div className="flex flex-col sm:flex-row gap-6 items-start">
+                  <img src={instructor.avatar || `https://ui-avatars.com/api/?name=${instructor.firstName}+${instructor.lastName}`} className="w-24 h-24 rounded-2xl object-cover" alt="Instructor" />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900">{instructor.firstName} {instructor.lastName}</h3>
+                    <div className="text-sm font-medium text-blue-600 mb-4">متخصص و مدرس ارشد</div>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                      دارای سال‌ها تجربه درخشان در زمینه آموزش و اجرای پروژه‌های عملی. تمرکز بر انتقال مفاهیم به ساده‌ترین شکل و آماده‌سازی دانشجویان برای بازار کار.
+                    </p>
+                    <Link href={`/instructors/${instructor._id}`} className="inline-flex items-center gap-2 text-blue-600 font-bold text-sm hover:text-blue-700">
+                      مشاهده پروفایل کامل <ArrowLeft className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            )}
+
+          </div>
+          
           {/* Sidebar CTA */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 hidden lg:block">
              <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 sticky top-24">
                 <div className="text-center mb-6">
                   <div className="text-sm text-gray-500 mb-2">هزینه ثبت‌نام</div>
                   <div className="text-3xl font-bold text-blue-600">
                     {cls.price === 0 ? 'رایگان' : `${cls.price.toLocaleString()} تومان`}
                   </div>
+                </div>
+                
+                {/* Capacity UI */}
+                <div className="bg-gray-50 p-4 rounded-xl mb-6">
+                   <div className="flex justify-between text-sm mb-2">
+                     <span className="text-gray-600 font-medium">وضعیت ظرفیت:</span>
+                     <span className="font-bold text-gray-900">{enrolled} نفر ثبت‌نام</span>
+                   </div>
+                   <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                     <div className={`h-2 rounded-full ${isFull ? 'bg-rose-500' : remaining <= 3 ? 'bg-orange-500' : 'bg-blue-600'}`} style={{ width: `${Math.min(100, (enrolled / cls.capacity) * 100)}%` }}></div>
+                   </div>
+                   <div className="text-xs text-center text-gray-500">
+                     {isFull ? 'ظرفیت تکمیل شده' : `${remaining} جای خالی باقی مانده`}
+                   </div>
                 </div>
 
                 <div className="space-y-4 mb-8">
@@ -125,7 +246,7 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span>دریافت فایل‌های ضبط شده (در صورت آنلاین بودن)</span>
+                    <span>دریافت فایل‌های ضبط شده (آنلاین)</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <ShieldCheck className="w-5 h-5 text-blue-500" />
@@ -133,15 +254,31 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
                   </div>
                 </div>
 
-                <button className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-600/30 transition-all mb-4">
-                  ثبت‌نام در کلاس
+                <button 
+                  disabled={ctaDisabled}
+                  className={`w-full py-4 rounded-xl font-bold text-lg transition-all mb-4 ${ctaClass}`}
+                >
+                  {ctaText}
                 </button>
-                <div className="text-center text-xs text-gray-400">
-                  فقط ۳ نفر ظرفیت باقی مانده است.
-                </div>
              </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Sticky CTA */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-50 flex items-center justify-between">
+        <div>
+          <div className="text-xs text-gray-500 mb-0.5">هزینه ثبت‌نام</div>
+          <div className="text-lg font-bold text-blue-600">
+            {cls.price === 0 ? 'رایگان' : `${cls.price.toLocaleString()} تومان`}
+          </div>
+        </div>
+        <button 
+          disabled={ctaDisabled}
+          className={`px-8 py-3 rounded-xl font-bold transition-all ${ctaClass}`}
+        >
+          {ctaText}
+        </button>
       </div>
     </div>
   );
