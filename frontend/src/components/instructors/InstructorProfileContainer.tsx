@@ -13,12 +13,12 @@ export function InstructorProfileContainer({ id }: { id: string }) {
 
   // Since backend doesn't specifically filter classes by instructorId natively in a public route easily, 
   // we fetch all and filter in frontend for this specific requirement to make sure it works seamlessly.
-  const { data: allClasses } = useQuery({
+  const { data: allClassesData } = useQuery({
     queryKey: ['classes'],
     queryFn: () => api.get('/classes').then(res => res.data)
   });
   
-  const { data: allCourses } = useQuery({
+  const { data: allCoursesData } = useQuery({
     queryKey: ['courses'],
     queryFn: () => api.get('/courses').then(res => res.data)
   });
@@ -37,6 +37,9 @@ export function InstructorProfileContainer({ id }: { id: string }) {
 
   // Mocks and filtering
   const rating = 4 + (((userId?.firstName.length || 0) % 10) / 10);
+  
+  const allClasses = allClassesData?.classes || allClassesData?.data || [];
+  const allCourses = allCoursesData?.courses || allCoursesData?.data || [];
   
   const instructorClasses = allClasses?.filter((c: any) => c.instructors?.some((i: any) => i._id === userId?._id || i === userId?._id)) || [];
   const instructorCourses = allCourses?.filter((c: any) => c.instructor?._id === userId?._id || c.instructor === userId?._id) || [];
