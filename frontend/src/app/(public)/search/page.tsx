@@ -2,8 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search as SearchIcon, BookOpen, Video, FileText, ChevronLeft, Filter, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, BookOpen, Video, FileText, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { searchApi, SearchResult } from '@/features/search/api/search.api';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -13,23 +14,32 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<'all' | 'courses' | 'classes' | 'blog'>('all');
   const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<SearchResult | null>(null);
+
+  const performSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const res = await searchApi.globalSearch(searchQuery);
+      setResults(res.data);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      setIsSearching(true);
       router.push(`/search?q=${encodeURIComponent(query)}`);
-      // Simulate network request
-      setTimeout(() => setIsSearching(false), 1000);
     }
   };
 
   useEffect(() => {
     setQuery(initialQuery);
     if (initialQuery) {
-      setIsSearching(true);
-      const timer = setTimeout(() => setIsSearching(false), 800);
-      return () => clearTimeout(timer);
+      performSearch(initialQuery);
     }
   }, [initialQuery]);
 
@@ -37,10 +47,60 @@ function SearchContent() {
 
   const TABS = [
     { id: 'all', label: 'همه نتایج' },
-    { id: 'courses', label: 'دوره‌های آموزشی' },
-    { id: 'classes', label: 'کلاس‌ها' },
-    { id: 'blog', label: 'مقالات' },
+    { id: 'courses', label: 'دوره‌های آموزشی', count: results?.courses?.length || 0 },
+    { id: 'classes', label: 'کلاس‌ها', count: results?.classes?.length || 0 },
+    { id: 'blog', label: 'مقالات', count: results?.articles?.length || 0 },
   ];
+
+  const renderCourses = () => {
+    if (!results?.courses?.length) return null;
+    return (
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <BookOpen className="w-6 h-6 text-blue-600" /> دوره‌های آموزشی
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {results.courses.map(course => (
+            <Link key={course._id} href={`/courses/${course.slug}`} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition flex flex-col">
+              <img src={course.thumbnail || 'https://picsum.photos/seed/course/400/250'} alt={course.title} className="w-full h-48 object-cover" />
+              <div className="p-4 flex-1 flex flex-col">
+                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2">{course.title}</h3>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">{course.description}</p>
+                <div className="flex justify-between items-center text-sm font-medium">
+                  <span className="text-blue-600">{course.price === 0 ? 'رایگان' : `${course.price.toLocaleString('fa-IR')} تومان`}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderArticles = () => {
+    if (!results?.articles?.length) return null;
+    return (
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <FileText className="w-6 h-6 text-emerald-600" /> مقالات آموزشی
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {results.articles.map(article => (
+            <Link key={article._id} href={`/blog/${article.slug}`} className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg transition flex gap-4 items-start">
+              <img src={article.thumbnail || 'https://picsum.photos/seed/blog/200/200'} alt={article.title} className="w-24 h-24 object-cover rounded-xl shrink-0" />
+              <div>
+                <h3 className="font-bold text-gray-900 line-clamp-2 mb-1">{article.title}</h3>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-2">{article.excerpt}</p>
+                <span className="text-xs text-gray-400">{new Date(article.createdAt).toLocaleDateString('fa-IR')}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const hasNoResults = results && results.courses.length === 0 && results.classes.length === 0 && results.articles.length === 0;
 
   return (
     <main className="bg-gray-50 min-h-screen py-12">
@@ -68,19 +128,20 @@ function SearchContent() {
           </form>
 
           {/* Tabs */}
-          {hasSearched && (
+          {hasSearched && results && !hasNoResults && (
             <div className="flex items-center gap-2 mt-8 border-b border-gray-100 overflow-x-auto pb-2">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
                     activeTab === tab.id 
                       ? 'bg-blue-50 text-blue-700' 
                       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                   }`}
                 >
                   {tab.label}
+                  {tab.id !== 'all' && <span className="bg-white px-2 py-0.5 rounded-md text-xs">{tab.count}</span>}
                 </button>
               ))}
             </div>
@@ -95,21 +156,29 @@ function SearchContent() {
                 <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
                 <p className="text-gray-500">در حال جستجو برای «{initialQuery}»...</p>
               </div>
-            ) : (
+            ) : hasNoResults ? (
               <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center py-20">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-50 text-gray-400 mb-6">
                   <SearchIcon className="w-10 h-10" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">نتیجه‌ای یافت نشد!</h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  متاسفانه برای عبارت «{initialQuery}» در بخش {TABS.find(t => t.id === activeTab)?.label} نتیجه‌ای پیدا نکردیم. لطفاً املای کلمه را بررسی کنید یا از کلمات کلیدی دیگری استفاده نمایید.
+                  متاسفانه برای عبارت «{initialQuery}» نتیجه‌ای پیدا نکردیم. لطفاً املای کلمه را بررسی کنید یا از کلمات کلیدی دیگری استفاده نمایید.
                 </p>
                 <button 
-                  onClick={() => setQuery('')}
+                  onClick={() => { setQuery(''); router.push('/search'); }}
                   className="mt-8 px-6 py-2.5 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition"
                 >
                   پاک کردن جستجو
                 </button>
+              </div>
+            ) : (
+              <div>
+                {(activeTab === 'all' || activeTab === 'courses') && renderCourses()}
+                {(activeTab === 'all' || activeTab === 'blog') && renderArticles()}
+                {activeTab === 'classes' && results?.classes.length === 0 && (
+                  <p className="text-gray-500 text-center py-10">هیچ کلاسی یافت نشد.</p>
+                )}
               </div>
             )}
           </div>

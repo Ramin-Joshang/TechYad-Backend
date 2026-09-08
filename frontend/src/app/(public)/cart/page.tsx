@@ -1,35 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Trash2, ArrowLeft, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
-
-// Mock cart data
-const MOCK_CART = [
-  {
-    id: 1,
-    title: 'دوره جامع آموزش React.js (پروژه محور)',
-    instructor: 'دکتر محمدی',
-    price: 1500000,
-    image: 'https://picsum.photos/seed/react/300/200'
-  },
-  {
-    id: 2,
-    title: 'مسترکلاس برنامه‌نویسی پایتون و هوش مصنوعی',
-    instructor: 'مهندس رضایی',
-    price: 2800000,
-    image: 'https://picsum.photos/seed/python/300/200'
-  }
-];
+import { ShoppingCart, Trash2, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
+import { useCartStore } from '@/features/commerce/stores/cart.store';
+import { useState, useEffect } from 'react';
 
 export default function CartPage() {
-  const [items, setItems] = useState(MOCK_CART);
+  const { items, removeItem, getTotal } = useCartStore();
+  const [mounted, setMounted] = useState(false);
 
-  const total = items.reduce((sum, item) => sum + item.price, 0);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
-  };
+  const total = getTotal();
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <main className="bg-gray-50 min-h-screen py-12">

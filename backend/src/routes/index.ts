@@ -1,3 +1,4 @@
+import searchRoutes from "../modules/search/search.routes.js";
 import { Router } from 'express';
 import { sendSuccess } from '../common/utils/response.js';
 import authRoutes from '../modules/auth/auth.routes.js';
@@ -44,4 +45,5 @@ router.use('/', classRoutes);
 router.use('/', adminRoutes);
 router.use('/', generalRoutes);
 
+router.use("/", searchRoutes);
 export default router;

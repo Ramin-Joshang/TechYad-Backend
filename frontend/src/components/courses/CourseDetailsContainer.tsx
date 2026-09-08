@@ -5,8 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { PlayCircle, FileText, CheckCircle, Clock, Book, User, Star, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCartStore } from '@/features/commerce/stores/cart.store';
 
 export function CourseDetailsContainer({ slug }: { slug: string }) {
+  const router = useRouter();
+  const { addItem, items } = useCartStore();
+
   // Fetch Course
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course', slug],
@@ -20,13 +25,9 @@ export function CourseDetailsContainer({ slug }: { slug: string }) {
     enabled: !!course?._id
   });
 
-  // Fetch Comments/Reviews - wait, the API uses lessons for comments, but we want course reviews. Let's just mock it or assume there's a reviews endpoint.
-  // We'll just display a placeholder for reviews since backend doesn't have course reviews endpoint.
-
   if (courseLoading) {
     return <div className="min-h-screen flex items-center justify-center">درحال بارگذاری اطلاعات دوره...</div>;
   }
-
   if (!course) {
     return <div className="min-h-screen flex items-center justify-center text-red-500">دوره پیدا نشد</div>;
   }
@@ -34,6 +35,30 @@ export function CourseDetailsContainer({ slug }: { slug: string }) {
   const isFree = course.price === 0;
   const hasDiscount = course.discountPrice && course.discountPrice < course.price;
   const instructor = course.instructors?.[0];
+  const finalPrice = hasDiscount ? course.discountPrice : course.price;
+
+  const isInCart = items.some(item => item.id === course._id && item.type === 'course');
+
+  const handleAddToCart = () => {
+    if (isFree) {
+      // Direct enrollment logic here (call API directly, then redirect to student dashboard)
+      // For now, redirect to student dashboard
+      router.push('/student');
+      return;
+    }
+
+    if (!isInCart) {
+      addItem({
+        id: course._id,
+        title: course.title,
+        instructor: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'نامشخص',
+        price: finalPrice,
+        image: course.thumbnail || `https://picsum.photos/seed/${course.slug}/300/200`,
+        type: 'course'
+      });
+    }
+    router.push('/cart');
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen py-10 pb-20">
@@ -107,8 +132,11 @@ export function CourseDetailsContainer({ slug }: { slug: string }) {
                   )}
                 </div>
                 
-                <button className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-600/30 transition-all">
-                  ثبت نام در دوره
+                <button 
+                  onClick={handleAddToCart}
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-600/30 transition-all"
+                >
+                  {isFree ? 'ثبت نام رایگان' : isInCart ? 'مشاهده سبد خرید' : 'افزودن به سبد خرید'}
                 </button>
                 <p className="text-center text-sm text-gray-500 mt-4">ضمانت بازگشت وجه تا ۷ روز</p>
               </div>
