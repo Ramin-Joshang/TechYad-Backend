@@ -48,10 +48,10 @@ export function Footer() {
             <h4 className="text-white font-bold mb-6">پشتیبانی</h4>
             <ul className="space-y-4 text-sm">
               <li><Link href="/faq" className="hover:text-blue-400 transition">سوالات متداول</Link></li>
-              <li><Link href="/terms" className="hover:text-blue-400 transition">قوانین و مقررات</Link></li>
+              <li><Link href="/rules" className="hover:text-blue-400 transition">قوانین و مقررات</Link></li>
               <li><Link href="/privacy" className="hover:text-blue-400 transition">حریم خصوصی</Link></li>
               <li><Link href="/contact" className="hover:text-blue-400 transition">تماس با ما</Link></li>
-              <li><Link href="/teach" className="hover:text-blue-400 transition">همکاری در تدریس</Link></li>
+              <li><Link href="/careers" className="hover:text-blue-400 transition">همکاری در تدریس</Link></li>
             </ul>
           </div>
 

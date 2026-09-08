@@ -15,5 +15,8 @@
   "devDependencies": {
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0"
+  },
+  "dependencies": {
+    "react-hot-toast": "^2.6.0"
   }
 }

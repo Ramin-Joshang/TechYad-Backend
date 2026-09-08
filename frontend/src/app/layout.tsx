@@ -4,6 +4,7 @@ import { QueryProvider } from "@/lib/QueryProvider";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "TechYad - Online Education",
@@ -25,6 +26,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <Toaster position="top-center" />
           </AuthProvider>
         </QueryProvider>
       </body>

@@ -16,8 +16,10 @@ import instructorRoutes from '../modules/instructors/instructor.routes.js';
 import classRoutes from '../modules/classes/class.routes.js';
 import adminRoutes from '../modules/admin/admin.routes.js';
 import homeRoutes from '../modules/home/home.routes.js';
+import generalRoutes from '../modules/general/general.routes.js';
 
 const router = Router();
+
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -40,5 +42,6 @@ router.use('/', supportRoutes);
 router.use('/', instructorRoutes);
 router.use('/', classRoutes);
 router.use('/', adminRoutes);
+router.use('/', generalRoutes);
 
 export default router;
