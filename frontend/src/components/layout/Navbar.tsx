@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
-import { LogOut, User, BookOpen } from 'lucide-react';
+import { LogOut, User, Search, Bell, ShoppingCart } from 'lucide-react';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -28,13 +28,25 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
+            <Link href="/search" className="text-gray-500 hover:text-blue-600 transition ml-2">
+              <Search className="w-5 h-5" />
+            </Link>
+
             {isAuthenticated && user ? (
               <div className="flex items-center gap-4">
-                <Link href={user.role === 'student' ? '/student' : user.role === 'instructor' ? '/instructor' : '/admin'} className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition">
-                  <User className="w-4 h-4" />
-                  پنل کاربری
+                <button className="text-gray-500 hover:text-blue-600 transition relative">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <Link href="/cart" className="text-gray-500 hover:text-blue-600 transition relative">
+                  <ShoppingCart className="w-5 h-5" />
                 </Link>
-                <button onClick={logout} className="text-gray-400 hover:text-red-500 transition">
+                <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                <Link href={user.role === 'student' ? '/student' : user.role === 'instructor' ? '/instructor' : '/admin'} className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition">
+                  <User className="w-5 h-5" />
+                  <span className="hidden sm:inline">پروفایل</span>
+                </Link>
+                <button onClick={logout} className="text-gray-400 hover:text-red-500 transition" title="خروج">
                   <LogOut className="w-5 h-5" />
                 </button>
               </div>

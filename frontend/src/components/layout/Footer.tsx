@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Send, Link2, Camera, Briefcase } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Camera, Briefcase, MessageCircle } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -19,13 +19,16 @@ export function Footer() {
               تک‌یاد، کامل‌ترین پلتفرم آموزشی آنلاین و حضوری با هدف ارتقای سطح مهارت‌های تخصصی و کاربردی برای ورود به بازار کار طراحی شده است.
             </p>
             <div className="flex items-center gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-colors" title="Telegram">
+                <Send className="w-5 h-5" />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-colors" title="Instagram">
                 <Camera className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-400 hover:text-white transition-colors">
-                <Link2 className="w-5 h-5" />
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-green-500 hover:text-white transition-colors" title="WhatsApp">
+                <MessageCircle className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-700 hover:text-white transition-colors">
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-700 hover:text-white transition-colors" title="LinkedIn">
                 <Briefcase className="w-5 h-5" />
               </a>
             </div>
