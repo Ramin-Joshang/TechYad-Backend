@@ -37,7 +37,7 @@ export function ClassesList() {
 
   const { data: classes, isLoading } = useQuery({
     queryKey: ['classes'],
-    queryFn: () => api.get('/classes').then(res => res.data)
+    queryFn: () => api.get('/classes').then(res => res.data.data)
   });
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -65,7 +65,7 @@ export function ClassesList() {
     const startDate = new Date(cls.startDate);
     const isStarted = startDate < now;
     // mock enrolled
-    const enrolled = (cls.title.length * 7) % (cls.capacity + 1); 
+    const enrolled = cls.enrolledCount || Math.floor((cls.title.length * 7) % (cls.capacity + 1)); 
     const isFull = enrolled >= cls.capacity;
     
     let clsStatus = 'open';
@@ -281,14 +281,14 @@ function ClassCard({ cls }: { cls: any }) {
   const startDate = cls.startDate ? new Date(cls.startDate) : new Date();
   
   // Mocks based on ID for consistency
-  const enrolled = (cls.title.length * 7) % (cls.capacity + 1); 
+  const enrolled = cls.enrolledCount || Math.floor((cls.title.length * 7) % (cls.capacity + 1)); 
   const isFull = enrolled >= cls.capacity;
   const isStarted = startDate < new Date();
   const remaining = cls.capacity - enrolled;
   
   // Rating mock
-  const rating = 4 + ((cls.title.length % 10) / 10);
-  const sessions = (cls.title.length % 12) + 4; // 4 to 15 sessions
+  const rating = cls.rating || (4 + ((cls.title.length % 10) / 10));
+  const sessions = cls.sessions || ((cls.title.length % 12) + 4); // 4 to 15 sessions
   
   let statusBadge = null;
   if (cls.status === 'completed') statusBadge = <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">پایان یافته</span>;

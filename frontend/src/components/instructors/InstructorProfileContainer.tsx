@@ -8,19 +8,19 @@ import Link from 'next/link';
 export function InstructorProfileContainer({ id }: { id: string }) {
   const { data: profile, isLoading } = useQuery({
     queryKey: ['instructor', id],
-    queryFn: () => api.get(`/instructors/${id}`).then(res => res.data)
+    queryFn: () => api.get(`/instructors/${id}`).then(res => res.data.data)
   });
 
   // Since backend doesn't specifically filter classes by instructorId natively in a public route easily, 
   // we fetch all and filter in frontend for this specific requirement to make sure it works seamlessly.
   const { data: allClassesData } = useQuery({
     queryKey: ['classes'],
-    queryFn: () => api.get('/classes').then(res => res.data)
+    queryFn: () => api.get('/classes').then(res => res.data?.data || res.data)
   });
   
   const { data: allCoursesData } = useQuery({
     queryKey: ['courses'],
-    queryFn: () => api.get('/courses').then(res => res.data)
+    queryFn: () => api.get('/courses').then(res => res.data?.data || res.data)
   });
 
   if (isLoading) {
@@ -36,7 +36,7 @@ export function InstructorProfileContainer({ id }: { id: string }) {
   const displayAvatar = avatar || `https://ui-avatars.com/api/?name=${userId?.firstName}+${userId?.lastName}&size=200`;
 
   // Mocks and filtering
-  const rating = 4 + (((userId?.firstName.length || 0) % 10) / 10);
+  const rating = profile.rating || (4 + (((userId?.firstName.length || 0) % 10) / 10));
   
   const allClasses = allClassesData?.classes || allClassesData?.data || [];
   const allCourses = allCoursesData?.courses || allCoursesData?.data || [];
@@ -44,7 +44,7 @@ export function InstructorProfileContainer({ id }: { id: string }) {
   const instructorClasses = allClasses?.filter((c: any) => c.instructors?.some((i: any) => i._id === userId?._id || i === userId?._id)) || [];
   const instructorCourses = allCourses?.filter((c: any) => c.instructor?._id === userId?._id || c.instructor === userId?._id) || [];
   
-  const studentsCount = (instructorCourses.length * 120) + (instructorClasses.length * 15) || 420;
+  const studentsCount = profile.totalStudents || (instructorCourses.length * 120) + (instructorClasses.length * 15) || 420;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">

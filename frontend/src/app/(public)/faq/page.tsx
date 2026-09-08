@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ChevronDown, MessageSquare, PhoneCall } from 'lucide-react';
+import { Search, ChevronDown, MessageSquare, PhoneCall, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { generalApi } from '@/features/general/api/general.api';
 
 const FAQ_CATEGORIES = [
   { id: 'all', label: 'همه سوالات' },
@@ -14,28 +16,25 @@ const FAQ_CATEGORIES = [
   { id: 'support', label: 'پشتیبانی' }
 ];
 
-const MOCK_FAQS = [
-  { id: 1, category: 'register', q: 'چطور می‌توانم در سایت ثبت‌نام کنم؟', a: 'برای ثبت‌نام کافیست روی دکمه "ورود / ثبت‌نام" در گوشه چپ بالای صفحه کلیک کنید و با وارد کردن شماره موبایل خود، کد تایید را دریافت و وارد حساب کاربری خود شوید.' },
-  { id: 2, category: 'courses', q: 'آیا برای شرکت در دوره‌ها پیش‌نیاز لازم است؟', a: 'بستگی به دوره دارد. برخی دوره‌ها از پایه تدریس می‌شوند و نیازی به پیش‌نیاز ندارند. در صفحه توضیحات هر دوره، بخش "پیش‌نیازها" به طور دقیق مشخص شده است.' },
-  { id: 3, category: 'payment', q: 'آیا امکان پرداخت اقساطی وجود دارد؟', a: 'بله، برای دوره‌هایی که مبلغ آن‌ها بالای ۵ میلیون تومان است، شرایط پرداخت اقساطی (در ۳ قسط) فراهم شده است. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید.' },
-  { id: 4, category: 'online', q: 'چطور وارد کلاس آنلاین شوم؟', a: 'ابتدا وارد حساب کاربری خود شوید. سپس به بخش "کلاس‌های من" رفته و روی دکمه "ورود به کلاس" کلیک کنید. کلاس‌ها در پلتفرم اختصاصی تک‌یاد برگزار می‌شوند.' },
-  { id: 5, category: 'online', q: 'آیا ویدئوی کلاس‌های آنلاین ضبط می‌شود؟', a: 'بله، تمامی جلسات آنلاین به صورت خودکار ضبط شده و نهایتاً تا ۲۴ ساعت پس از برگزاری کلاس در پنل کاربری شما قرار می‌گیرد.' },
-  { id: 6, category: 'offline', q: 'در صورت غیبت در کلاس حضوری چه کار کنم؟', a: 'در صورت موجه بودن غیبت، می‌توانید از فایل صوتی کلاس یا جلسات جبرانی (در صورت حد نصاب) استفاده کنید. البته حضور در ۸۰٪ جلسات الزامی است.' },
-  { id: 7, category: 'support', q: 'چگونه می‌توانم سوالات درسی خود را از استاد بپرسم؟', a: 'شما می‌توانید از طریق سیستم تیکتینگ یا بخش "پرسش و پاسخ" در صفحه هر دوره، سوالات خود را مستقیماً از استاد یا پشتیبان آموزشی بپرسید.' },
-  { id: 8, category: 'payment', q: 'آیا در صورت انصراف، وجه بازگردانده می‌شود؟', a: 'لطفاً برای مشاهده شرایط دقیق استرداد وجه به صفحه "قوانین و مقررات" بخش بازپرداخت مراجعه کنید. به طور کلی قبل از شروع دوره امکان انصراف با کسر ۱۰٪ کارمزد وجود دارد.' }
-];
-
 export default function FAQPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [openItem, setOpenItem] = useState<number | null>(1); // Open first item by default
+  const [openItem, setOpenItem] = useState<string | null>(null);
 
-  const toggleItem = (id: number) => {
+  const { data: faqs, isLoading } = useQuery({
+    queryKey: ['faqs'],
+    queryFn: async () => {
+      const res = await generalApi.getFaqs();
+      return res.data?.data || res.data; // Mongoose models have _id
+    }
+  });
+
+  const toggleItem = (id: string) => {
     setOpenItem(openItem === id ? null : id);
   };
 
-  const filteredFaqs = MOCK_FAQS.filter(faq => {
-    const matchesSearch = faq.q.includes(searchTerm) || faq.a.includes(searchTerm);
+  const filteredFaqs = (faqs || []).filter((faq: any) => {
+    const matchesSearch = faq.question?.includes(searchTerm) || faq.answer?.includes(searchTerm);
     const matchesCategory = activeCategory === 'all' || faq.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
@@ -83,37 +82,41 @@ export default function FAQPage() {
 
           {/* FAQ List */}
           <div className="p-6 md:p-10">
-            {filteredFaqs.length === 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+              </div>
+            ) : filteredFaqs.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 نتیجه‌ای برای جستجوی شما یافت نشد.
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredFaqs.map(faq => (
+                {filteredFaqs.map((faq: any) => (
                   <div 
-                    key={faq.id} 
+                    key={faq._id} 
                     className={`border rounded-2xl transition-all duration-300 overflow-hidden ${
-                      openItem === faq.id ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 bg-white hover:border-blue-200'
+                      openItem === faq._id ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 bg-white hover:border-blue-200'
                     }`}
                   >
                     <button 
-                      onClick={() => toggleItem(faq.id)}
+                      onClick={() => toggleItem(faq._id)}
                       className="w-full flex items-center justify-between p-5 text-right focus:outline-none"
                     >
-                      <span className={`font-bold pr-2 ${openItem === faq.id ? 'text-blue-700' : 'text-gray-800'}`}>
-                        {faq.q}
+                      <span className={`font-bold pr-2 ${openItem === faq._id ? 'text-blue-700' : 'text-gray-800'}`}>
+                        {faq.question}
                       </span>
-                      <ChevronDown className={`w-5 h-5 transition-transform duration-300 shrink-0 ${openItem === faq.id ? 'rotate-180 text-blue-600' : 'text-gray-400'}`} />
+                      <ChevronDown className={`w-5 h-5 transition-transform duration-300 shrink-0 ${openItem === faq._id ? 'rotate-180 text-blue-600' : 'text-gray-400'}`} />
                     </button>
                     <div 
                       className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        openItem === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                        openItem === faq._id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                       }`}
                     >
                       <div className="p-5 pt-0 text-gray-600 leading-relaxed border-t border-transparent">
                         <div className="pl-6 border-r-2 border-blue-200 pr-4 mt-2">
-                          {faq.a}
+                          {faq.answer}
                         </div>
                       </div>
                     </div>

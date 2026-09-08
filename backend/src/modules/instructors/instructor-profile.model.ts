@@ -19,6 +19,10 @@ export interface IInstructorProfile extends Document {
     instagram?: string;
   };
   isApproved: boolean;
+  rating?: number;
+  totalStudents?: number;
+  coursesCount?: number;
+  classesCount?: number;
 }
 
 const instructorProfileSchema = new Schema<IInstructorProfile>(
@@ -43,6 +47,10 @@ const instructorProfileSchema = new Schema<IInstructorProfile>(
       instagram: String,
     },
     isApproved: { type: Boolean, default: false },
+    rating: { type: Number, default: 0 },
+    totalStudents: { type: Number, default: 0 },
+    coursesCount: { type: Number, default: 0 },
+    classesCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

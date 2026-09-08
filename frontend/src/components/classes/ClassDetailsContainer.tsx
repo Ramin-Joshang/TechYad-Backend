@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 export function ClassDetailsContainer({ slug }: { slug: string }) {
   const { data: cls, isLoading } = useQuery({
     queryKey: ['class', slug],
-    queryFn: () => api.get(`/classes/${slug}`).then(res => res.data)
+    queryFn: () => api.get(`/classes/${slug}`).then(res => res.data.data)
   });
 
   if (isLoading) {
@@ -27,13 +27,13 @@ export function ClassDetailsContainer({ slug }: { slug: string }) {
   const endDate = cls.endDate ? new Date(cls.endDate) : new Date();
   
   // Mocks based on ID for consistency
-  const enrolled = (cls.title.length * 7) % (cls.capacity + 1); 
+  const enrolled = cls.enrolledCount || Math.floor((cls.title.length * 7) % (cls.capacity + 1)); 
   const isFull = enrolled >= cls.capacity;
   const isStarted = startDate < new Date();
   const remaining = cls.capacity - enrolled;
   
-  const rating = 4 + ((cls.title.length % 10) / 10);
-  const sessions = (cls.title.length % 12) + 4;
+  const rating = cls.rating || (4 + ((cls.title.length % 10) / 10));
+  const sessions = cls.sessions || ((cls.title.length % 12) + 4);
   const sessionDuration = 90; // mock duration
 
   // Status CTA logic

@@ -12,6 +12,10 @@ export interface IClass extends Document {
   capacity: number;
   startDate: Date;
   endDate: Date;
+  enrolledCount?: number;
+  rating?: number;
+  sessions?: number;
+  thumbnail?: string;
   location?: string;
   meetingLink?: string;
   status: "draft" | "published" | "completed" | "cancelled";
@@ -31,6 +35,10 @@ const classSchema = new Schema<IClass>(
     capacity: { type: Number, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+    enrolledCount: { type: Number, default: 0 },
+    rating: { type: Number, default: 0 },
+    sessions: { type: Number, default: 0 },
+    thumbnail: { type: String },
     location: String,
     meetingLink: String,
     status: { type: String, enum: ["draft", "published", "completed", "cancelled"], default: "draft" },

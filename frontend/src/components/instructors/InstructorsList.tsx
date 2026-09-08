@@ -12,7 +12,7 @@ export function InstructorsList() {
   
   const { data: instructors, isLoading } = useQuery({
     queryKey: ['instructors'],
-    queryFn: () => api.get('/instructors').then(res => res.data)
+    queryFn: () => api.get('/instructors').then(res => res.data.data)
   });
 
   if (isLoading) {
@@ -136,10 +136,10 @@ function InstructorCard({ instructor, featured = false }: { instructor: any, fea
   const displayAvatar = avatar || `https://ui-avatars.com/api/?name=${userId?.firstName}+${userId?.lastName}&background=random`;
   
   // Consistent mock data
-  const rating = 4 + (((userId?.firstName.length || 0) % 10) / 10);
-  const coursesCount = (userId?.firstName.length || 5) + 2;
-  const classesCount = (userId?.lastName.length || 3) + 1;
-  const studentsCount = coursesCount * 120 + classesCount * 15;
+  const rating = instructor.rating || (4 + (((userId?.firstName.length || 0) % 10) / 10));
+  const coursesCount = instructor.coursesCount || ((userId?.firstName.length || 5) + 2);
+  const classesCount = instructor.classesCount || ((userId?.lastName.length || 3) + 1);
+  const studentsCount = instructor.totalStudents || (coursesCount * 120 + classesCount * 15);
 
   return (
     <Link href={`/instructors/${userId?._id}`} className="block group h-full">
