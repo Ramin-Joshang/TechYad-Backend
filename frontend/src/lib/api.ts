@@ -1,7 +1,10 @@
-import axios from 'axios';
+import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import toast from 'react-hot-toast';
 
-// The base URL for the backend proxy. Since we configured rewrites in next.config.ts,
-// requests to /api/* will be proxied to the backend at http://localhost:3001/api/*
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
 export const api = axios.create({
   baseURL: '/api/v1',
   withCredentials: true,
@@ -10,20 +13,73 @@ export const api = axios.create({
   },
 });
 
-// Add a request interceptor
-api.interceptors.request.use(
-  (config) => {
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+let isRefreshing = false;
+let failedQueue: any[] = [];
 
-// Add a response interceptor to handle common errors like 401 Unauthorized
+api.interceptors.request.use((config) => config as CustomAxiosRequestConfig);
+
 api.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
+  (response: AxiosResponse) => {
+    return response.data;
+  },
+  async (error) => {
+    const originalRequest = error.config as CustomAxiosRequestConfig;
+    
+    const hideToast = originalRequest?.headers?.['X-Hide-Error-Toast'] === 'true';
+
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || 'خطایی رخ داده است';
+
+      if (status === 401 && originalRequest && !originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise(function(resolve, reject) {
+            failedQueue.push({resolve, reject});
+          }).then(token => {
+            return api(originalRequest);
+          }).catch(err => {
+            return Promise.reject(err);
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        if (!hideToast) {
+          toast.error('لطفاً دوباره وارد شوید');
+        }
+        
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        }
+        isRefreshing = false;
+      } else if (!hideToast) {
+        switch (status) {
+          case 403:
+            toast.error('شما دسترسی لازم برای این عملیات را ندارید');
+            break;
+          case 404:
+            toast.error('مورد یافت نشد');
+            break;
+          case 409:
+            toast.error(message || 'تداخل اطلاعات. این عملیات قابل انجام نیست');
+            break;
+          case 422:
+            toast.error(message || 'اطلاعات وارد شده نامعتبر است');
+            break;
+          case 500:
+            toast.error('خطای سرور. لطفا مجددا تلاش کنید');
+            break;
+          default:
+            if (status !== 401) {
+               toast.error(message);
+            }
+        }
+      }
+    } else if (error.request) {
+      if (!hideToast) toast.error('خطا در برقراری ارتباط با سرور');
+    }
+
     return Promise.reject(error);
   }
 );

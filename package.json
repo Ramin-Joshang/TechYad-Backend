@@ -17,6 +17,8 @@
     "cross-env": "^10.1.0"
   },
   "dependencies": {
-    "react-hot-toast": "^2.6.0"
+    "clsx": "^2.1.1",
+    "react-hot-toast": "^2.6.0",
+    "tailwind-merge": "^3.6.0"
   }
 }
