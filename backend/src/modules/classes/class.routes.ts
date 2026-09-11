@@ -5,7 +5,7 @@ import { asyncHandler } from '../../common/utils/asyncHandler.js';
 
 const router = Router();
 const requireAuth = asyncHandler(authenticate);
-const isInstructor = [requireAuth, authorize('courses.manage')]; // Mock instructor perm
+const isInstructor = [requireAuth, authorize('create_class')];
 
 // Public routes
 router.get('/classes', asyncHandler(Controller.getClasses));

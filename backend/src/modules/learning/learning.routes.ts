@@ -1,22 +1,30 @@
 import { Router } from 'express';
 import * as Controller from './learning.controller.js';
-import { validate } from '../../common/middleware/validate.js';
 import { authenticate } from '../../common/middleware/auth.js';
 import { asyncHandler } from '../../common/utils/asyncHandler.js';
-import { updateProgressSchema } from './learning.validation.js';
+import { updateProgressSchema, submitAssignmentSchema } from './learning.validation.js';
+import { validate } from '../../common/middleware/validate.js';
 
 const router = Router();
 const requireAuth = asyncHandler(authenticate);
 
 // --- Dashboard ---
-router.get('/me/dashboard', requireAuth, asyncHandler(Controller.getStudentDashboard));
+router.get('/dashboard', requireAuth, asyncHandler(Controller.getStudentDashboard));
 
 // --- Enrollments ---
-router.get('/me/enrollments', requireAuth, asyncHandler(Controller.getMyEnrollments));
-router.post('/courses/:courseId/enroll', requireAuth, asyncHandler(Controller.enrollFreeCourse));
+router.get('/enrollments', requireAuth, asyncHandler(Controller.getMyEnrollments));
+router.get('/enrollments/:courseId', requireAuth, asyncHandler(Controller.getMyEnrollmentDetails));
+router.post('/enrollments/free/:courseId', requireAuth, asyncHandler(Controller.enrollInFreeCourse));
+
+// --- Secure Lesson Access ---
+router.get('/lessons/:lessonId', requireAuth, asyncHandler(Controller.getSecureLesson));
 
 // --- Progress ---
-router.get('/me/lessons/:lessonId/progress', requireAuth, asyncHandler(Controller.getLessonProgress));
-router.post('/me/lessons/:lessonId/progress', requireAuth, validate(updateProgressSchema), asyncHandler(Controller.updateProgress));
+router.post('/progress/:lessonId', requireAuth, validate(updateProgressSchema), asyncHandler(Controller.updateLessonProgress));
+router.get('/progress/:lessonId', requireAuth, asyncHandler(Controller.getLessonProgress));
+
+// --- Assignments ---
+router.post('/assignments/:lessonId/submit', requireAuth, validate(submitAssignmentSchema), asyncHandler(Controller.submitAssignment));
+router.get('/assignments/:lessonId', requireAuth, asyncHandler(Controller.getAssignmentSubmission));
 
 export default router;

@@ -137,4 +137,38 @@ export class AuthService {
     
     return { message: 'Password has been reset successfully' };
   }
+
+  static async refreshToken(refreshToken: string) {
+    if (!refreshToken) {
+      throw new AppError('No refresh token provided', 401, 'AUTH_NO_REFRESH_TOKEN');
+    }
+
+    try {
+      const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as { id: string };
+      const user = await User.findById(decoded.id).populate('role');
+      
+      if (!user || user.status !== 'active') {
+        throw new AppError('User no longer exists or is inactive', 401, 'AUTH_USER_NOT_FOUND');
+      }
+
+      const newAccessToken = signToken(user._id.toString());
+      const newRefreshToken = signRefreshToken(user._id.toString());
+      const role = user.role as any;
+
+      return {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: role?.slug,
+          permissions: role?.permissions || []
+        },
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+      };
+    } catch (error) {
+      throw new AppError('Invalid or expired refresh token', 401, 'AUTH_INVALID_REFRESH_TOKEN');
+    }
+  }
 }

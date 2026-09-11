@@ -47,3 +47,9 @@ export const createMockPayment = async (req: AuthRequest, res: Response) => {
   const result = await CommerceService.createPaymentMock(req.user._id as string, req.params.orderId as string);
   sendSuccess(res, result, 'Payment intent created');
 };
+
+export const verifyMockPayment = async (req: AuthRequest, res: Response) => {
+  const { authority, status } = req.body;
+  const result = await CommerceService.verifyPaymentMock(req.user._id as string, authority as string, status as 'OK' | 'NOK');
+  sendSuccess(res, result, 'Payment verification processed');
+};

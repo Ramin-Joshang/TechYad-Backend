@@ -121,4 +121,19 @@ export class LearningService {
   static async getLessonProgress(userId: string, lessonId: string) {
     return await LessonProgress.findOne({ userId, lessonId });
   }
+
+  // --- Secure Content Access ---
+  static async getSecureLesson(userId: string, lessonId: string) {
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
+
+    if (!lesson.isFree) {
+      const enrollment = await Enrollment.findOne({ userId, courseId: lesson.courseId, status: 'active' });
+      if (!enrollment) {
+        throw new AppError('You must purchase this course to access this lesson', 403, 'FORBIDDEN');
+      }
+    }
+
+    return lesson;
+  }
 }

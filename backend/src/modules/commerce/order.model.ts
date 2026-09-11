@@ -4,6 +4,8 @@ export interface IOrderItem {
   itemType: "course" | "class";
   itemId: Types.ObjectId;
   titleSnapshot: string;
+  thumbnail?: string;
+  instructorName?: string;
   price: number;
   discount: number;
   finalPrice: number;
@@ -39,6 +41,8 @@ const orderSchema = new Schema<IOrder>(
           required: true,
         },
         titleSnapshot: {
+        thumbnail: String,
+        instructorName: String,
           type: String,
           required: true,
         },

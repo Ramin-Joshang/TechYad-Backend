@@ -137,6 +137,16 @@ export class CourseService {
   }
 
   static async getLessons(chapterId: string) {
-    return await Lesson.find({ chapterId }).sort({ order: 1 });
+    const lessons = await Lesson.find({ chapterId }).sort({ order: 1 });
+    // Strip secure content if not fetching via secure route
+    return lessons.map(l => {
+      const lObj = l.toObject();
+      if (!lObj.isFree) {
+        delete lObj.video;
+        delete lObj.content;
+        delete lObj.attachments;
+      }
+      return lObj;
+    });
   }
 }

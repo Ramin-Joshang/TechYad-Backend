@@ -16,6 +16,7 @@ const router = Router();
 // Middlewares
 const requireAuth = asyncHandler(authenticate);
 const isAdmin = [requireAuth, authorize('courses.publish')];
+const isInstructor = [requireAuth, authorize('create_course')];
 
 // --- Public Routes ---
 router.get('/courses', asyncHandler(Controller.getCourses));
@@ -29,11 +30,11 @@ router.get('/lessons/:lessonId/comments', asyncHandler(CommentController.getLess
 router.post('/lessons/:lessonId/comments', requireAuth, asyncHandler(CommentController.addLessonComment));
 
 // --- Instructor Routes ---
-router.post('/instructor/courses', requireAuth, validate(createCourseSchema), asyncHandler(Controller.createCourse));
-router.patch('/instructor/courses/:id', requireAuth, validate(updateCourseSchema), asyncHandler(Controller.updateCourse));
-router.post('/instructor/courses/:id/request-review', requireAuth, asyncHandler(Controller.requestReview));
-router.post('/instructor/courses/:courseId/chapters', requireAuth, validate(createChapterSchema), asyncHandler(Controller.createChapter));
-router.post('/instructor/chapters/:chapterId/lessons', requireAuth, validate(createLessonSchema), asyncHandler(Controller.createLesson));
+router.post('/instructor/courses', isInstructor, validate(createCourseSchema), asyncHandler(Controller.createCourse));
+router.patch('/instructor/courses/:id', isInstructor, validate(updateCourseSchema), asyncHandler(Controller.updateCourse));
+router.post('/instructor/courses/:id/request-review', isInstructor, asyncHandler(Controller.requestReview));
+router.post('/instructor/courses/:courseId/chapters', isInstructor, validate(createChapterSchema), asyncHandler(Controller.createChapter));
+router.post('/instructor/chapters/:chapterId/lessons', isInstructor, validate(createLessonSchema), asyncHandler(Controller.createLesson));
 
 // --- Admin Routes ---
 router.post('/admin/courses/:id/publish', isAdmin, asyncHandler(Controller.publishCourse));

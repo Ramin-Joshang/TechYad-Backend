@@ -1,29 +1,40 @@
 import { api } from '@/lib/api';
 
+interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
 export const commerceApi = {
-  // Sync the local cart to the backend before checkout
-  syncCart: async (items: Array<{ itemType: string, itemId: string }>) => {
-    // Clear the existing remote cart
-    await api.delete('/me/cart');
-    // Add all items
-    for (const item of items) {
-      try {
-        await api.post('/me/cart/items', item);
-      } catch (e) {
-        console.error('Error syncing cart item', item, e);
-      }
-    }
+  getCart: async () => {
+    return api.get<any, ApiResponse<any>>('/me/cart');
   },
-
-  checkoutPreview: async () => {
-    return api.post<any, { success: boolean; data: any }>('/checkout/preview', {});
+  addToCart: async (itemType: 'course' | 'class', itemId: string) => {
+    return api.post<any, ApiResponse<any>>('/me/cart/items', { itemType, itemId });
   },
-
-  createOrder: async () => {
-    return api.post<any, { success: boolean; data: any }>('/checkout/create', {});
+  removeFromCart: async (itemId: string) => {
+    return api.delete<any, ApiResponse<any>>(`/me/cart/items/${itemId}`);
   },
-  
-  createPayment: async (orderId: string) => {
-    return api.post<any, { success: boolean; data: any }>(`/payments/${orderId}/create`, {});
+  clearCart: async () => {
+    return api.delete<any, ApiResponse<any>>('/me/cart');
+  },
+  checkoutPreview: async (couponCode?: string) => {
+    return api.post<any, ApiResponse<any>>('/checkout/preview', { couponCode });
+  },
+  createOrder: async (couponCode?: string) => {
+    return api.post<any, ApiResponse<any>>('/checkout/create', { couponCode });
+  },
+  createMockPayment: async (orderId: string) => {
+    return api.post<any, ApiResponse<any>>(`/payments/${orderId}/create`);
+  },
+  verifyMockPayment: async (authority: string, status: 'OK' | 'NOK') => {
+    return api.post<any, ApiResponse<any>>('/payments/verify', { authority, status });
+  },
+  getMyOrders: async () => {
+    return api.get<any, ApiResponse<any[]>>('/me/orders');
+  },
+  getOrderById: async (id: string) => {
+    return api.get<any, ApiResponse<any>>(`/me/orders/${id}`);
   }
 };

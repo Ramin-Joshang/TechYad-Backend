@@ -1,9 +1,12 @@
+import mongoose from 'mongoose';
 import { Cart, ICartItem } from './cart.model.js';
 import { Order } from './order.model.js';
 import { Payment } from './payment.model.js';
 import { Coupon } from './coupon.model.js';
 import { Course } from '../courses/course.model.js';
+import { Class } from '../classes/class.model.js';
 import { Enrollment } from '../learning/enrollment.model.js';
+import { ClassEnrollment } from '../classes/class-enrollment.model.js';
 import { AppError } from '../../common/errors/AppError.js';
 
 export class CommerceService {
@@ -29,8 +32,18 @@ export class CommerceService {
       if (course.status !== 'published') throw new AppError('Course is not available', 400, 'UNAVAILABLE');
       if (course.price === 0) throw new AppError('This is a free course. Enroll directly.', 400, 'IS_FREE');
 
-      const enrollment = await Enrollment.findOne({ userId, courseId: course._id });
-      if (enrollment) throw new AppError('You are already enrolled in this course', 400, 'ALREADY_ENROLLED');
+      const enrollment = await Enrollment.findOne({ userId, courseId: course._id, status: 'active' });
+      if (enrollment) throw new AppError('You are already enrolled in this course', 409, 'COURSE_ALREADY_ENROLLED');
+    } else if (data.itemType === 'class') {
+      const classItem = await Class.findById(data.itemId);
+      if (!classItem) throw new AppError('Class not found', 404, 'NOT_FOUND');
+      if (classItem.status !== 'published') throw new AppError('Class is not available', 400, 'UNAVAILABLE');
+      if (classItem.enrolledCount !== undefined && classItem.capacity !== undefined && classItem.enrolledCount >= classItem.capacity) {
+        throw new AppError('Class is full', 400, 'CLASS_FULL');
+      }
+
+      const enrollment = await ClassEnrollment.findOne({ userId, classId: classItem._id, status: 'active' });
+      if (enrollment) throw new AppError('You are already enrolled in this class', 409, 'CLASS_ALREADY_ENROLLED');
     }
 
     cart.items.push({ itemType: data.itemType, itemId: data.itemId as any });
@@ -55,28 +68,55 @@ export class CommerceService {
   // --- Checkout & Orders ---
   static async checkoutPreview(userId: string, couponCode?: string) {
     const cart = await this.getCart(userId);
-    if (cart.items.length === 0) throw new AppError('Cart is empty', 400, 'CART_EMPTY');
+    // If cart is empty, return empty preview instead of throwing error so Cart page doesn't break
+    if (cart.items.length === 0) {
+      return { items: [], subtotal: 0, discountAmount: 0, totalAmount: 0, couponId: null };
+    }
 
     let subtotal = 0;
     const previewItems: any[] = [];
 
     for (const item of cart.items) {
       if (item.itemType === 'course') {
-        const course = await Course.findById(item.itemId);
-        if (!course || course.status !== 'published') {
-           throw new AppError(`Course with ID ${item.itemId} is no longer available`, 400, 'ITEM_UNAVAILABLE');
+        const course = await Course.findById(item.itemId).populate('instructors', 'firstName lastName');
+        if (!course || course.status !== 'published') { 
+          throw new AppError(`Course with ID ${item.itemId} is no longer available`, 400, 'ITEM_UNAVAILABLE');
         }
         subtotal += course.price;
         previewItems.push({
           itemType: 'course',
           itemId: course._id,
           titleSnapshot: course.title,
+          thumbnail: course.thumbnail,
+          instructorName: course.instructors && course.instructors.length > 0 
+            ? `${(course.instructors[0] as any).firstName} ${(course.instructors[0] as any).lastName}` 
+            : 'استاد',
           price: course.price,
           discount: 0,
           finalPrice: course.price
         });
+      } else if (item.itemType === 'class') {
+        const classItem = await Class.findById(item.itemId).populate('instructors', 'firstName lastName');
+        if (!classItem || classItem.status !== 'published') {
+          throw new AppError(`Class with ID ${item.itemId} is no longer available`, 400, 'ITEM_UNAVAILABLE');
+        }
+        if (classItem.enrolledCount !== undefined && classItem.capacity !== undefined && classItem.enrolledCount >= classItem.capacity) {
+          throw new AppError(`Class ${classItem.title} is full`, 400, 'CLASS_FULL');
+        }
+        subtotal += classItem.price;
+        previewItems.push({
+          itemType: 'class',
+          itemId: classItem._id,
+          titleSnapshot: classItem.title,
+          thumbnail: classItem.thumbnail,
+          instructorName: classItem.instructors && classItem.instructors.length > 0 
+            ? `${(classItem.instructors[0] as any).firstName} ${(classItem.instructors[0] as any).lastName}` 
+            : 'استاد',
+          price: classItem.price,
+          discount: 0,
+          finalPrice: classItem.price
+        });
       }
-      // Add logic for 'class' when Class model is ready
     }
 
     let discountAmount = 0;
@@ -112,28 +152,27 @@ export class CommerceService {
       subtotal,
       discountAmount,
       totalAmount,
-      couponId: couponRecord?._id
+      couponId: couponRecord?._id,
+      couponCode: couponRecord?.code
     };
   }
 
   static async createOrder(userId: string, couponCode?: string) {
     const preview = await this.checkoutPreview(userId, couponCode);
-
+    if (preview.items.length === 0) throw new AppError('Cart is empty', 400, 'CART_EMPTY');
+    
+    // NOTE: We don't increase coupon usageCount here, only on successful payment!
+    
     const order = await Order.create({
       userId,
       items: preview.items,
       subtotal: preview.subtotal,
       discountAmount: preview.discountAmount,
       totalAmount: preview.totalAmount,
-      couponId: preview.couponId,
+      couponId: preview.couponId || undefined,
       status: 'pending'
     });
 
-    if (preview.couponId) {
-      await Coupon.findByIdAndUpdate(preview.couponId, { $inc: { usageCount: 1 } });
-    }
-
-    await this.clearCart(userId);
     return order;
   }
 
@@ -162,6 +201,98 @@ export class CommerceService {
       status: 'pending'
     });
 
-    return { payment, paymentUrl: `/mock-gateway?authority=${payment.authority}` };
+    return { payment, paymentUrl: `/payment/mock-gateway?authority=${payment.authority}` };
+  }
+
+  static async verifyPaymentMock(userId: string, authority: string, status: 'OK' | 'NOK') {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const payment = await Payment.findOne({ authority, userId }).session(session);
+      if (!payment) throw new AppError('Payment not found', 404, 'NOT_FOUND');
+      if (payment.status !== 'pending') throw new AppError('Payment already processed', 400, 'PAYMENT_PROCESSED');
+
+      const order = await Order.findById(payment.orderId).session(session);
+      if (!order) throw new AppError('Order not found', 404, 'NOT_FOUND');
+
+      if (status !== 'OK') {
+        payment.status = 'failed';
+        await payment.save({ session });
+        order.status = 'failed';
+        await order.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+        return { success: false, message: 'Payment failed' };
+      }
+
+      // 1. Verify capacity for classes again!
+      for (const item of order.items) {
+        if (item.itemType === 'class') {
+          const classItem = await Class.findById(item.itemId).session(session);
+          if (classItem && classItem.enrolledCount !== undefined && classItem.capacity !== undefined) {
+             if (classItem.enrolledCount >= classItem.capacity) {
+               throw new AppError(`Class ${classItem.title} is full`, 400, 'CLASS_FULL_REJECT');
+             }
+          }
+        }
+      }
+
+      // 2. Mark Payment as success
+      payment.status = 'paid';
+      await payment.save({ session });
+
+      // 3. Mark Order as paid
+      order.status = 'paid';
+      await order.save({ session });
+
+      // 4. Create Enrollments and update counts
+      for (const item of order.items) {
+        if (item.itemType === 'course') {
+          await Enrollment.create([{
+            userId,
+            courseId: item.itemId,
+            orderId: order._id,
+            source: 'purchase',
+            status: 'active',
+            amount: item.finalPrice
+          }], { session });
+
+          await Course.findByIdAndUpdate(item.itemId, { $inc: { studentCount: 1 } }, { session });
+        } else if (item.itemType === 'class') {
+          await ClassEnrollment.create([{
+            userId,
+            classId: item.itemId,
+            orderId: order._id,
+            status: 'active',
+            amount: item.finalPrice
+          }], { session });
+
+          await Class.findByIdAndUpdate(item.itemId, { $inc: { enrolledCount: 1 } }, { session });
+        }
+      }
+
+      // 5. Update Coupon Usage
+      if (order.couponId) {
+        await Coupon.findByIdAndUpdate(order.couponId, { $inc: { usageCount: 1 } }, { session });
+      }
+
+      // 6. Clear Cart
+      const cart = await Cart.findOne({ userId }).session(session);
+      if (cart) {
+        // Only clear items that were successfully bought
+        const boughtItemIds = order.items.map(i => i.itemId.toString());
+        cart.items = cart.items.filter(i => !boughtItemIds.includes(i.itemId.toString())) as any;
+        await cart.save({ session });
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+      return { success: true, orderId: order._id };
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   }
 }

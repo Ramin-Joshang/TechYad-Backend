@@ -45,14 +45,29 @@ api.interceptors.response.use(
         originalRequest._retry = true;
         isRefreshing = true;
 
-        if (!hideToast) {
-          toast.error('لطفاً دوباره وارد شوید');
+        try {
+          // Call the refresh endpoint to get new cookies
+          await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true });
+          
+          failedQueue.forEach(prom => prom.resolve());
+          failedQueue = [];
+          
+          return api(originalRequest);
+        } catch (refreshError) {
+          failedQueue.forEach(prom => prom.reject(refreshError));
+          failedQueue = [];
+          
+          if (!hideToast) {
+            toast.error('لطفاً دوباره وارد شوید');
+          }
+          
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          }
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
-        
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        }
-        isRefreshing = false;
       } else if (!hideToast) {
         switch (status) {
           case 403:

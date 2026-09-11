@@ -26,6 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     initAuth();
+    
+    const handleUnauthorized = () => logout();
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, [setAuth, logout, setInitializing]);
 
   return <>{children}</>;

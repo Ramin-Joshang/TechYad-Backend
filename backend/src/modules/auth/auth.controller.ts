@@ -80,3 +80,10 @@ export const resetPassword = async (req: Request, res: Response) => {
   const result = await AuthService.resetPassword(req.body.token, req.body.newPassword);
   sendSuccess(res, result, 'Password reset successfully');
 };
+
+export const refreshToken = async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken;
+  const result = await AuthService.refreshToken(token);
+  setAuthCookies(res, result.accessToken, result.refreshToken);
+  sendSuccess(res, { user: result.user }, 'Token refreshed successfully');
+};
